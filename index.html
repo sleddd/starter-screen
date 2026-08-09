@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New Tab</title>
+<style>
+  :root{
+    --fg:#fff;
+    --shadow:0 2px 20px rgba(0,0,0,.45);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
+    font-weight:400;
+    color:var(--fg);
+    background:#1a1a1a;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- background ---------- */
+  .bg{
+    position:fixed; inset:0;
+    background-size:cover;
+    background-position:center;
+    opacity:0;
+    transition:opacity 1.2s ease;
+    z-index:0;
+  }
+  .bg.on{opacity:1}
+  .scrim{
+    position:fixed; inset:0; z-index:1;
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,.46) 0%, rgba(0,0,0,.10) 24%,
+                                  rgba(0,0,0,.10) 66%, rgba(0,0,0,.52) 100%);
+    pointer-events:none;
+  }
+
+  .wrap{position:relative; z-index:2; height:100%; display:flex; flex-direction:column}
+
+  /* ---------- top bar ---------- */
+  .top{
+    display:flex; align-items:flex-start; justify-content:space-between;
+    padding:26px 34px 0; gap:24px;
+  }
+  .tools{display:flex; gap:14px; flex-shrink:0; align-items:flex-start}
+  .tool{
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    font-size:13px; letter-spacing:.2px; opacity:.9;
+    text-shadow:var(--shadow); cursor:pointer;
+    background:none;border:none;color:inherit;font-family:inherit;
+    transition:opacity .18s;
+  }
+  .tool:hover{opacity:.65}
+  .tool svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
+            stroke-linecap:round;stroke-linejoin:round}
+
+  /* critter on/off switch — vertical wall-switch plate */
+  .critter-toggle svg .plate{
+    fill:none; stroke:currentColor;
+  }
+  .critter-toggle svg .rocker{
+    fill:currentColor; stroke:none;
+    /* translate, not y — Safari doesn't animate SVG geometry properties */
+    transition:transform .18s cubic-bezier(.3,1.5,.5,1);
+  }
+  /* off: rocker drops to the bottom of the plate */
+  .critter-toggle[aria-pressed="false"] svg .rocker{transform:translateY(6px)}
+  .critter-toggle[aria-pressed="false"]{opacity:.5}
+
+  .clocks{
+    display:flex; align-items:flex-start; gap:30px;
+    flex-wrap:wrap; justify-content:flex-end;
+  }
+  .clock{display:flex; flex-direction:column; align-items:center; gap:2px}
+  .clock .t{
+    display:flex; align-items:baseline; gap:0;
+    font-size:25px; font-weight:400; letter-spacing:-.4px;
+    text-shadow:var(--shadow); white-space:nowrap;
+  }
+  .clock .t svg{margin-right:7px; align-self:center}
+  .clock .t svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;
+                stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .clock .c{font-size:13px; opacity:.9; text-shadow:var(--shadow); white-space:nowrap}
+  .clock .t .ampm{font-size:.62em; font-weight:400; margin-left:4px}
+
+  /* ---------- center clock ---------- */
+  .mid{flex:1; display:flex; align-items:center; justify-content:center; padding-bottom:40px}
+  .big{
+    font-size:clamp(90px,13.5vw,190px);
+    font-weight:600; letter-spacing:-4px; line-height:1;
+    text-shadow:0 4px 44px rgba(0,0,0,.4);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* ---------- bottom ---------- */
+  .bottom{
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:end; gap:24px;
+    padding:0 34px 30px;
+  }
+  .place{
+    display:flex; align-items:center; gap:11px;
+    font-size:13.5px; opacity:.9; text-shadow:var(--shadow);
+    justify-self:start; min-width:0;
+  }
+  .place svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;
+             stroke-linecap:round;flex-shrink:0}
+  .place button{
+    background:none;border:none;color:inherit;font:inherit;cursor:pointer;
+    opacity:.9;transition:opacity .18s;padding:0;
+  }
+  .place button:hover{opacity:1;text-decoration:underline}
+
+  .fav{
+    display:inline-flex; align-items:center; padding:0;
+    background:none; border:none; cursor:pointer;
+    opacity:.9; transition:opacity .18s, transform .18s;
+  }
+  .fav:hover{opacity:1; transform:scale(1.15)}
+  .fav svg{
+    width:16px; height:16px;
+    fill:none; stroke:currentColor; stroke-width:1.8;
+    stroke-linejoin:round; transition:fill .18s;
+  }
+  .fav.on{opacity:1}
+  .fav.on svg{fill:#ff5a72; stroke:#ff5a72}
+
+  /* ---------- settings popup ---------- */
+  .place{position:relative}
+  .gear{
+    display:inline-flex; align-items:center; padding:0;
+    background:none; border:none; cursor:pointer; color:inherit;
+    opacity:.9; transition:opacity .18s;
+  }
+  .gear:hover{opacity:1}
+  .gear svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;
+            stroke-linecap:round}
+  .menu{
+    position:absolute; bottom:calc(100% + 14px); left:0;
+    min-width:390px; max-width:440px;
+    background:rgba(22,22,24,.86);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:14px; padding:10px;
+    box-shadow:0 12px 40px rgba(0,0,0,.5);
+    z-index:30; text-align:left;
+  }
+  .menu[hidden]{display:none}
+  .menu-item{
+    display:flex; align-items:center; gap:11px; width:100%;
+    padding:14px 12px; border:none; border-radius:9px;
+    background:none; color:#fff; font:inherit; font-size:14.5px;
+    text-align:left; cursor:pointer; opacity:.9;
+  }
+  .menu-item:hover{background:rgba(255,255,255,.12); opacity:1}
+  .menu-item svg{width:17px;height:17px;stroke:currentColor;fill:none;
+                 stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .menu-sep{height:1px;background:rgba(255,255,255,.13);margin:12px 4px}
+  .menu-head{
+    font-size:11px; text-transform:uppercase; letter-spacing:.7px;
+    opacity:.9; padding:4px 12px 12px;
+  }
+  .menu-list{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;
+    max-height:330px; overflow-y:auto; padding:2px 12px 8px;
+  }
+  .menu-empty{
+    grid-column:1 / -1;
+    font-size:13px; opacity:.9; padding:5px 0 10px;
+  }
+  .menu-fav{
+    display:flex; align-items:center; justify-content:center;
+    padding:0; border:none; cursor:pointer;
+    border-radius:6px; overflow:hidden;
+    aspect-ratio:4 / 3; width:100%;
+    background:rgba(255,255,255,.07);
+    outline:1px solid rgba(255,255,255,.18); outline-offset:-1px;
+    transition:transform .15s, outline-color .15s;
+  }
+  .menu-fav img{
+    width:100%; height:100%;
+    object-fit:contain;
+    display:block;
+  }
+  .menu-fav:hover{transform:scale(1.06); outline-color:rgba(255,255,255,.75)}
+  .quote{
+    font-size:16.5px; font-style:italic; text-align:center;
+    max-width:600px; line-height:1.45;
+    justify-self:center;
+    text-shadow:0 1px 3px rgba(0,0,0,.55), 0 2px 18px rgba(0,0,0,.45);
+  }
+  .quote .who{
+    font-style:normal; opacity:.9; font-size:13.5px;
+    display:block; margin-top:5px;
+  }
+  .skipquote{
+    display:block; margin:6px auto 0;
+    background:none; border:none; padding:0;
+    color:inherit; font:inherit;
+    font-style:italic; font-size:12px;
+    cursor:pointer; opacity:.55; transition:opacity .18s;
+    text-shadow:var(--shadow); white-space:nowrap;
+  }
+  .skipquote:hover{opacity:1; text-decoration:underline}
+  .spacer{justify-self:end}
+  .credit{
+    font-size:11.5px; opacity:.9; text-shadow:var(--shadow);
+    text-align:right; white-space:nowrap; visibility:hidden;
+  }
+  .credit a{color:inherit; text-decoration:none; border-bottom:1px solid rgba(255,255,255,.32)}
+  .credit a:hover{opacity:1}
+
+  /* ---------- search overlay ---------- */
+  .overlay{
+    position:fixed; inset:0; z-index:20;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    display:none; align-items:center; justify-content:center;
+  }
+  .overlay.on{display:flex}
+  .overlay input{
+    width:min(640px,80vw); padding:17px 24px;
+    font-size:21px; font-family:inherit;
+    color:#fff; background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.28); border-radius:13px;
+    outline:none;
+  }
+  .overlay input::placeholder{color:rgba(255,255,255,.55)}
+  .hint{
+    position:absolute; bottom:34%; font-size:13px; opacity:.6;
+    text-shadow:var(--shadow);
+  }
+
+  /* ---------- octavian ---------- */
+  .octavian{
+    position:fixed; right:6px; bottom:0; z-index:3;
+    width:clamp(120px,13vw,196px);
+    pointer-events:none;
+    transform:translateY(110%);
+    animation:oct-enter 1.5s cubic-bezier(.22,1.1,.36,1) 1.1s forwards;
+  }
+  .octavian img{
+    display:block; width:100%; height:auto;
+    /* lift him off the photo so he doesn't read as a sticker */
+    filter:drop-shadow(0 10px 22px rgba(0,0,0,.55));
+    transform-origin:60% 100%;
+    animation:oct-float 7s ease-in-out infinite;
+  }
+  /* entrance: peek up from below the corner */
+  @keyframes oct-enter{
+    from{transform:translateY(110%)}
+    to  {transform:translateY(25%)}
+  }
+  /* idle: a slow breathing bob with a touch of sway */
+  @keyframes oct-float{
+    0%,100%{transform:translateY(0)    rotate(0deg)   scaleY(1)}
+    28%    {transform:translateY(-5px) rotate(-1.1deg) scaleY(1.012)}
+    52%    {transform:translateY(-2px) rotate(.5deg)  scaleY(.994)}
+    76%    {transform:translateY(-6px) rotate(1deg)   scaleY(1.008)}
+  }
+
+  /* steam off the mug he's pouring */
+  .octavian .steam{
+    /* anchored on the mug rim; zero-height so wisps rise freely from that point */
+    position:absolute; left:29%; bottom:30%;
+    width:24%; height:0;
+    pointer-events:none; overflow:visible; z-index:2;
+  }
+  .octavian .steam i{
+    position:absolute; bottom:0;
+    width:26px; height:30px;
+    /* soft vapor puff rather than a hard dot */
+    background:radial-gradient(ellipse at 50% 60%,
+      rgba(255,255,255,.95) 0%, rgba(255,255,255,.6) 38%, rgba(255,255,255,0) 72%);
+    filter:blur(3px);
+    opacity:0;
+    animation:oct-steam 5s ease-out infinite;
+    will-change:transform,opacity;
+  }
+  /* staggered so the plume never pulses in lockstep */
+  .octavian .steam i:nth-child(1){left:8%;  animation-delay:0s;    animation-duration:5.2s}
+  .octavian .steam i:nth-child(2){left:34%; animation-delay:.9s;   animation-duration:4.4s}
+  .octavian .steam i:nth-child(3){left:58%; animation-delay:1.9s;  animation-duration:5.8s}
+  .octavian .steam i:nth-child(4){left:20%; animation-delay:2.7s;  animation-duration:4.8s; width:7px}
+  .octavian .steam i:nth-child(5){left:46%; animation-delay:3.6s;  animation-duration:5.4s; width:11px}
+  /* rises while curling side to side, thinning as it goes */
+  @keyframes oct-steam{
+    0%  {opacity:0;   transform:translate(0,0)        scale(.4)  rotate(0deg)}
+    12% {opacity:.9}
+    35% {opacity:.75; transform:translate(-9px,-30px)  scale(.85) rotate(-6deg)}
+    60% {opacity:.5;  transform:translate(7px,-56px)   scale(1.2) rotate(5deg)}
+    85% {opacity:.2;  transform:translate(-6px,-80px)  scale(1.6) rotate(-4deg)}
+    100%{opacity:0;   transform:translate(3px,-100px)  scale(2)   rotate(3deg)}
+  }
+
+  /* he perks up when you come near */
+  .octavian.awake{animation-play-state:paused; transform:translateY(16%)}
+  .octavian.awake img{animation-duration:2.4s; transform:rotate(-3deg) scale(1.04)}
+  .octavian, .octavian img{transition:transform .55s cubic-bezier(.22,1,.36,1)}
+  .octavian .hit{
+    position:absolute; inset:0; pointer-events:auto; cursor:pointer;
+  }
+  /* startled little hop when clicked */
+  .octavian.hop img{animation:oct-hop .7s cubic-bezier(.3,1.4,.5,1)}
+  @keyframes oct-hop{
+    0%  {transform:translateY(0) rotate(0)}
+    30% {transform:translateY(-16px) rotate(-6deg) scale(1.05)}
+    60% {transform:translateY(-4px) rotate(3deg)}
+    100%{transform:translateY(0) rotate(0)}
+  }
+
+  /* ---------- gerald ---------- */
+  .gerald{
+    position:fixed; left:2px; bottom:0; z-index:3;
+    width:clamp(78px,7vw,112px);
+    pointer-events:none;
+    transform:translateY(110%);
+    animation:ger-enter 1.4s cubic-bezier(.22,1.1,.36,1) 1.5s forwards;
+  }
+  /* walk layer: carries him back and forth across the corner */
+  .gerald .walk{
+    display:block;
+    animation:ger-pace 19s ease-in-out infinite;
+  }
+  /* flip layer: he's drawn facing right, so scaleX(-1) is the return leg */
+  .gerald .turn{
+    display:block;
+    animation:ger-turn 19s steps(1,end) infinite;
+  }
+  /* strut layer: the bob + waddle of walking */
+  .gerald .strut{
+    display:block;
+    transform-origin:50% 100%;
+    animation:ger-strut .62s ease-in-out infinite;
+  }
+  .gerald img{
+    display:block; width:100%; height:auto;
+    filter:drop-shadow(0 8px 18px rgba(0,0,0,.5));
+    transform-origin:50% 80%;
+    /* grumbling head-shake, runs continuously while he walks */
+    animation:ger-shake 1.24s ease-in-out infinite;
+  }
+  /* slower than the strut so the two drift in and out of phase
+     instead of locking into one mechanical beat */
+  @keyframes ger-shake{
+    0%,100%{transform:rotate(0deg)}
+    20%    {transform:rotate(-3.4deg)}
+    45%    {transform:rotate(2.6deg)}
+    70%    {transform:rotate(-1.8deg)}
+  }
+  @keyframes ger-enter{
+    from{transform:translateY(110%)}
+    to  {transform:translateY(16%)}
+  }
+  /* the route: amble right, pause and consider, amble back, pause */
+  @keyframes ger-pace{
+    0%,  6%  {transform:translateX(0)}
+    38%, 52% {transform:translateX(128px)}
+    84%, 100%{transform:translateX(0)}
+  }
+  /* natural art faces right: unflipped outbound, mirrored on the way back.
+     Flips happen during the stationary pauses, not mid-stride. */
+  @keyframes ger-turn{
+    0%   {transform:scaleX(1)}
+    45%  {transform:scaleX(-1)}
+    91%  {transform:scaleX(1)}
+    100% {transform:scaleX(1)}
+  }
+  /* head-bob + waddle, paced to footfalls while he's moving */
+  @keyframes ger-strut{
+    0%,100%{transform:translateY(0)    rotate(0deg)}
+    25%    {transform:translateY(-3px) rotate(-2.2deg)}
+    50%    {transform:translateY(0)    rotate(0deg)}
+    75%    {transform:translateY(-3px) rotate(2.2deg)}
+  }
+  /* standing still at each end of the route — strut and grumbling both stop */
+  .gerald.resting .strut{animation:ger-idle 4.6s ease-in-out infinite}
+  .gerald.resting img{animation:none}
+  @keyframes ger-idle{
+    0%,100%{transform:translateY(0)      rotate(0deg)}
+    50%    {transform:translateY(-1.5px) rotate(0deg)}
+  }
+  /* he stops pacing and glares at you */
+  .gerald.awake{transform:translateY(8%)}
+  .gerald.awake .walk,
+  .gerald.awake .turn,
+  .gerald.awake .strut,
+  .gerald.awake img{animation-play-state:paused}
+  .gerald{transition:transform .5s cubic-bezier(.22,1,.36,1)}
+  /* hit box kept off the heart button so favoriting still works */
+  /* Only his head/chest is clickable. The controls row sits ~73px below the
+     top of his box, so the hit area stops well short of it — a percentage
+     here would drift, since his box extends past the bottom of the screen. */
+  .gerald .hit{
+    position:absolute; left:0; right:0; top:0; height:58px;
+    pointer-events:auto; cursor:pointer;
+  }
+  /* startled hop when clicked — distinct from the constant head-shake */
+  .gerald.cluck .strut{animation:ger-cluck .6s cubic-bezier(.3,1.5,.5,1) !important}
+  @keyframes ger-cluck{
+    0%,100%{transform:translateY(0)    scale(1,1)}
+    18%    {transform:translateY(-14px) scale(.94,1.08)}
+    45%    {transform:translateY(-3px)  scale(1.05,.95)}
+    70%    {transform:translateY(-6px)  scale(1,1)}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .octavian{animation:none; transform:translateY(25%)}
+    .octavian img{animation:none}
+    .octavian .steam{display:none}
+    .gerald{animation:none; transform:translateY(16%)}
+    .gerald .walk,.gerald .turn,.gerald .strut,.gerald img{animation:none}
+  }
+  /* hidden: they duck back down off the bottom edge rather than vanishing */
+  body.no-critters .octavian,
+  body.no-critters .gerald{
+    animation:none;
+    transform:translateY(115%);
+    pointer-events:none;
+  }
+  body.no-critters .octavian{transition:transform .55s cubic-bezier(.5,0,.75,0)}
+  body.no-critters .gerald{transition:transform .5s cubic-bezier(.5,0,.75,0) .08s}
+
+  @media (max-width:1100px){ .octavian,.gerald{display:none} }
+
+  @media (max-width:1100px){
+    .top{flex-direction:column; align-items:center; gap:20px}
+    .clocks{justify-content:center; gap:22px}
+    .clock .t{font-size:21px}
+    .bottom{grid-template-columns:1fr; gap:16px; text-align:center}
+    .place,.quote{justify-self:center}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg" id="bg"></div>
+<div class="scrim"></div>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="tools">
+      <button class="tool" id="searchBtn" title="Search (press /)">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      </button>
+
+      <button class="tool critter-toggle" id="critterBtn" title="Show critters" aria-pressed="true">
+        <svg viewBox="0 0 24 24">
+          <!-- wall switch plate: outer plate + rocker that flips up (on) / down (off) -->
+          <rect class="plate" x="6.5" y="2.5" width="11" height="19" rx="2"/>
+          <rect class="rocker" x="9.5" y="5.5" width="5" height="7" rx="1.2"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="clocks" id="clocks"></div>
+  </header>
+
+  <main class="mid"><div class="big" id="big">--:--</div></main>
+
+  <footer class="bottom">
+    <div class="place">
+      <button id="settingsBtn" class="gear" title="Photo options" aria-expanded="false">
+        <svg viewBox="0 0 24 24"><circle cx="7" cy="8" r="2.4"/><path d="M3 8h1.6M9.4 8H21"/><circle cx="16" cy="16" r="2.4"/><path d="M3 16h10.6M18.4 16H21"/></svg>
+      </button>
+
+      <div class="menu" id="settingsMenu" hidden>
+        <button class="menu-item" id="nextPhoto">
+          <svg viewBox="0 0 24 24"><path d="M5 12h13"/><path d="M13 6l6 6-6 6"/></svg>
+          <span><em>Skip to next photo</em></span>
+        </button>
+        <div class="menu-sep"></div>
+        <div class="menu-head">Favorites</div>
+        <div class="menu-list" id="favMenuList"></div>
+      </div>
+
+      <button id="placeName" title="Click to rename this photo's location">&nbsp;</button>
+      <button id="favBtn" class="fav" title="Save this photo to favorites" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><path d="M12 20.4l-1.6-1.5C5.5 14.5 2.6 11.9 2.6 8.6 2.6 6 4.7 4 7.3 4c1.5 0 2.9.7 3.8 1.8h1.8C13.8 4.7 15.2 4 16.7 4c2.6 0 4.7 2 4.7 4.6 0 3.3-2.9 5.9-7.8 10.3z"/></svg>
+      </button>
+    </div>
+    <div class="quote" id="quote"></div>
+    <div class="spacer"><div class="credit" id="credit"></div></div>
+  </footer>
+
+</div>
+
+<div class="gerald" id="gerald">
+  <div class="walk"><div class="turn"><div class="strut">
+    <img src="gerald.png" alt="Gerald, a distinctly unimpressed chicken">
+  </div></div></div>
+  <div class="hit" title="Gerald"></div>
+</div>
+
+<div class="octavian" id="octavian">
+  <img src="octavian.png" alt="Octavian, an octopus pouring coffee">
+  <div class="steam"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="hit" title="Octavian"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <input id="q" type="text" placeholder="Search the web…" autocomplete="off" spellcheck="false">
+  <div class="hint">Enter to search · Esc to close</div>
+</div>
+
+<script src="fetch-photos.js"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  var ZONES = [
+    {city:"Hawaii",       tz:"Pacific/Honolulu"},
+    {city:"Portland",     tz:"America/Los_Angeles"},
+    {city:"New Orleans",  tz:"America/Chicago"},
+    {city:"New York",     tz:"America/New_York"},
+    {city:"London",       tz:"Europe/London"},
+    {city:"France",       tz:"Europe/Paris"},
+    {city:"Cape Town",    tz:"Africa/Johannesburg"}
+  ];
+
+  var WEATHER = [
+    {city:"Portland",    lat:45.52, lon:-122.68},
+    {city:"New Orleans", lat:29.95, lon:-90.07}
+  ];
+
+  var HOME_TZ = "America/Los_Angeles";
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  var memStore = {};
+  function store(k, v){
+    var key = "sp_" + k;
+    if(v === undefined){
+      if(Object.prototype.hasOwnProperty.call(memStore, key)) return memStore[key];
+      try{ return localStorage.getItem(key); }catch(e){ return null; }
+    }
+    memStore[key] = String(v);
+    try{ localStorage.setItem(key, v); }catch(e){}
+  }
+
+  function timeIn(tz){
+    var parts = new Intl.DateTimeFormat("en-US",{
+      timeZone:tz, hour:"numeric", minute:"2-digit", hour12:true
+    }).formatToParts(new Date());
+    var h="", m="", ap="";
+    for(var i=0;i<parts.length;i++){
+      if(parts[i].type==="hour") h=parts[i].value;
+      else if(parts[i].type==="minute") m=parts[i].value;
+      else if(parts[i].type==="dayPeriod") ap=parts[i].value;
+    }
+    return {hm:h+":"+m, ap:(ap||"").toLowerCase()};
+  }
+
+  var clockSvg = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';
+
+  function buildClocks(){
+    var html = "";
+    for(var i=0;i<ZONES.length;i++){
+      html += '<div class="clock" data-tz="'+ZONES[i].tz+'">'
+            +   '<div class="t">'+clockSvg+'<span class="v">--:--</span><span class="ampm"></span></div>'
+            +   '<div class="c">'+ZONES[i].city+'</div>'
+            + '</div>';
+    }
+    for(var j=0;j<WEATHER.length;j++){
+      html += '<div class="clock" data-wx="'+j+'">'
+            +   '<div class="t">'
+            +     '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>'
+            +     '<span class="v">--</span>'
+            +   '</div>'
+            +   '<div class="c">'+WEATHER[j].city+'</div>'
+            + '</div>';
+    }
+    $("clocks").innerHTML = html;
+  }
+
+  function tick(){
+    var nodes = document.querySelectorAll(".clock[data-tz]");
+    for(var i=0;i<nodes.length;i++){
+      var t = timeIn(nodes[i].getAttribute("data-tz"));
+      nodes[i].querySelector(".v").textContent = t.hm;
+      nodes[i].querySelector(".ampm").textContent = t.ap;
+    }
+    $("big").textContent = timeIn(HOME_TZ).hm;
+  }
+
+  function loadWeather(){
+    for(var i=0;i<WEATHER.length;i++){
+      (function(idx){
+        var w = WEATHER[idx];
+        var url = "https://api.open-meteo.com/v1/forecast?latitude="+w.lat
+                + "&longitude="+w.lon+"&current=temperature_2m&temperature_unit=fahrenheit";
+        fetch(url)
+          .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+          .then(function(d){
+            var el = document.querySelector('.clock[data-wx="'+idx+'"] .v');
+            if(el && d && d.current && typeof d.current.temperature_2m === "number"){
+              el.textContent = Math.round(d.current.temperature_2m) + "°";
+            }
+          })
+          .catch(function(){
+            var node = document.querySelector('.clock[data-wx="'+idx+'"]');
+            if(node) node.style.display = "none";
+          });
+      })(i);
+    }
+  }
+
+  var current = null;
+
+  // The photo of the day is pinned to the local calendar date: reopening a tab
+  // reuses it, and only "Skip to next photo" (or a new day) picks a new one.
+  function todayKey(){
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+  }
+
+  function cachedPhoto(){
+    var raw = store("photo_of_day");
+    if(!raw) return null;
+    try{
+      var saved = JSON.parse(raw);
+      if(saved && saved.day === todayKey() && saved.photo && saved.photo.url) return saved.photo;
+    }catch(e){}
+    return null;
+  }
+
+  function cachePhoto(photo){
+    if(!photo || !photo.url) return;
+    try{ store("photo_of_day", JSON.stringify({day: todayKey(), photo: photo})); }catch(e){}
+  }
+
+  function labelFor(photo){
+    var custom = store("name_" + (photo.url || photo.id));
+    return custom || photo.label;
+  }
+
+  function showPhoto(photo){
+    current = photo;
+    var img = new Image();
+    img.onload = function(){
+      var bg = $("bg");
+      bg.style.backgroundImage = 'url("' + photo.url + '")';
+      bg.classList.add("on");
+      $("placeName").textContent = labelFor(photo);
+      renderCredit(photo);
+      renderFav();
+    };
+    img.onerror = function(){
+      $("placeName").textContent = "";
+      renderCredit(null);
+    };
+    img.src = photo.url;
+  }
+
+  // force = true skips the cache (the shuffle button) and pins the new photo
+  // as today's.
+  function loadPhoto(force, tries){
+    tries = tries || 0;
+    if(!force){
+      var saved = cachedPhoto();
+      if(saved){ showPhoto(saved); return; }
+    }
+    getRandomPhoto()
+      .then(function(photo){
+        cachePhoto(photo);
+        showPhoto(photo);
+      })
+      .catch(function(err){
+        var msg = (err && err.message) || "";
+        var hopeless = msg.indexOf("rate limit") !== -1 ||
+                       msg.indexOf("access key") !== -1;
+        if(!hopeless && tries < 1){ loadPhoto(true, tries + 1); return; }
+        $("placeName").textContent = "";
+        renderCredit(null);
+        if(window.console) console.warn("Background unavailable:", msg);
+      });
+  }
+
+  function renderCredit(photo){
+    var el = $("credit");
+    if(!el) return;
+    if(photo && photo.by){
+      el.innerHTML = photo.link
+        ? 'Photo by <a href="'+photo.link+'" target="_blank" rel="noopener">'+photo.by+'</a> on Unsplash'
+        : 'Photo by ' + photo.by + ' on Unsplash';
+      el.style.visibility = "visible";
+    } else {
+      el.innerHTML = "";
+      el.style.visibility = "hidden";
+    }
+  }
+
+  /* ================= quote ================= */
+  var QUOTES = [
+    "A life spent making mistakes is not only more honorable, but more useful than a life spent doing nothing. — George Bernard Shaw",
+    "Science is organized knowledge. Wisdom is organized life. — Kant",
+    "The privilege of a lifetime is to become who you truly are. — Carl Jung",
+    "In the face of pain there are no heroes. — George Orwell",
+    "Democracy and socialism have nothing in common but one word: equality. But notice the difference: while democracy seeks equality in liberty, socialism seeks equality in restraint and servitude. — Alexis de Tocqueville",
+    "I don't feel that it is necessary to know exactly what I am. The main interest in life and work is to become someone else that you were not in the beginning. — Michel Foucault",
+    "Muddy water is best cleared by leaving it alone. — Alan Watts",
+    "All truly wise thoughts have been thought already thousands of times; but to make them truly ours, we must think them over again honestly, until they take root in our personal experience. — Goethe",
+    "The society of transparency does not tolerate gaps in information or vision. — Byung-Chul Han",
+    "Stuff your eyes with wonder, live as if you'd drop dead in ten seconds. See the world. It's more fantastic than any dream made or paid for in factories. — Ray Bradbury",
+    "A long habit of not thinking a thing wrong gives it a superficial appearance of being right. — Thomas Paine",
+    "A double bind is when you are told to do two contradictory things at once — but neither can be disobeyed without punishment. — Gregory Bateson",
+    "The world breaks everyone, and afterward, many are strong at the broken places. — Ernest Hemingway",
+    "To perceive is to suffer. — Aristotle",
+    "Loneliness does not come from having no people about one, but from being unable to communicate the things that seem important to oneself. — Carl Jung",
+    "No human thing is of serious importance. — Plato",
+    "Life-transforming ideas have always come to me through books. — bell hooks",
+    "The inquiry of truth, which is the love-making, or wooing of it; the knowledge of truth, which is the presence of it; and the belief of truth, which is the enjoying of it, is the sovereign good of human nature. — Francis Bacon",
+    "Great spirits have always encountered violent opposition from mediocre minds. — Albert Einstein",
+    "It is forbidden to kill; therefore all murderers are punished unless they kill in large numbers and to the sound of trumpets. — Voltaire",
+    "The ideal subject of totalitarian rule is not the convinced Nazi or the convinced Communist, but people for whom the distinction between fact and fiction and the distinction between true and false no longer exist. — Hannah Arendt",
+    "He who is not a good servant will not be a good master. — Plato",
+    "Happiness can exist only in acceptance. — George Orwell",
+    "A purpose, an intention, a design, strikes everywhere even the careless, the most stupid thinker. — David Hume",
+    "We are stuck with technology when what we really want is just stuff that works. — Douglas Adams",
+    "The real voyage of discovery consists not in seeking new landscapes, but in having new eyes. — Marcel Proust",
+    "The life of the law has not been logic; it has been experience. — Oliver Wendell Holmes Jr.",
+    "Whether I shall turn out to be the hero of my own life, or whether that station will be held by anybody else, these pages must show. — Charles Dickens",
+    "Comprehension does not mean denying the outrageous, deducing the unprecedented from precedents, or explaining phenomena by such analogies and generalities that the impact of reality and the shock of experience are no longer felt. — Hannah Arendt",
+    "Where there is desire, power relations must exist. And yet their presence is constantly negotiated. — Michel Foucault",
+    "The more I read, the more I acquire, the more certain I am that I know nothing. — Voltaire",
+    "In the end, we are self-perceiving, self-inventing, locked-in mirages that are little miracles of self-reference. — Douglas Hofstadter",
+    "The best time to plant a tree was twenty years ago. The second best time is now. — Proverb",
+    "I do not agree with what you have to say, but I'll defend to the death your right to say it. — Voltaire",
+    "In the process of enlightenment, there can only be participants. — Jürgen Habermas",
+    "Surveillance capitalism unilaterally claims human experience as free raw material for translation into behavioral data. — Shoshana Zuboff",
+    "Jobs fill your pocket, adventures fill your soul. — Jaime Lyn Beatty",
+    "Each problem that I solved became a rule, which served afterwards to solve other problems. — René Descartes",
+    "If you are always trying to be normal, you will never know how amazing you can be. — Attributed to various",
+    "Collect moments, not things. — Anonymous",
+    "Science fiction writers, I am sorry to say, really do not know anything. — Philip K. Dick",
+    "In order to write about life first you must live it. — Ernest Hemingway",
+    "The world is a book, and those who do not travel read only one page. — Augustine",
+    "The secret thoughts of a man run over all things, holy, profane, clean, obscene, grave, and light, without shame or blame. — Hobbes",
+    "The meaning of my existence is that life has addressed a question to me. — Carl Jung",
+    "An act has no ethical quality whatever unless it be chosen out of several all equally possible. — William James",
+    "Reason obeys itself; and ignorance submits to whatever is dictated to it. — Thomas Paine",
+    "Nothing behind me, everything ahead of me, as is ever so on the road. — Jack Kerouac",
+    "Education is the art of making man ethical. — Hegel",
+    "We are cups, constantly and quietly being filled. The trick is, knowing how to tip ourselves over and let the beautiful stuff out. — Ray Bradbury",
+    "In law a man is guilty when he violates the rights of others. In ethics he is guilty if he only thinks of doing so. — Kant",
+    "Innovation distinguishes between a leader and a follower. — Steve Jobs",
+    "We are but whirlpools in a river of ever-flowing water. We are not stuff that abides, but patterns that perpetuate themselves. — Norbert Wiener",
+    "Love what you do and do what you love. Don't listen to anyone else who tells you not to do it. — Ray Bradbury",
+    "Dare to know! Have the courage to use your own understanding. — Kant",
+    "There is no polite way to suggest to someone that they have devoted their life to a folly. — Daniel Dennett",
+    "A body of men holding themselves accountable to nobody ought not to be trusted by anybody. — Thomas Paine",
+    "The real political task in a society such as ours is to criticize the workings of institutions that appear to be both neutral and independent. — Michel Foucault",
+    "Of all the paths you take in life, make sure a few of them are dirt. — John Muir",
+    "The earth is the very quintessence of the human condition. — Hannah Arendt",
+    "It is the mark of an educated mind to be able to entertain a thought without accepting it. — Aristotle",
+    "I know of no country in which there is so little independence of mind and real freedom of discussion. — Alexis de Tocqueville",
+    "Doubt is not a pleasant condition, but certainty is absurd. — Voltaire",
+    "To be independent of public opinion is the first formal condition of achieving anything great. — Hegel",
+    "The whole is greater than the sum of its parts. — Aristotle",
+    "Who looks outside, dreams; who looks inside, awakes. — Carl Jung",
+    "Power is not an institution, and not a structure; neither is it a certain strength we are endowed with; it is the name that one attributes to a complex strategical situation in a particular society. — Michel Foucault",
+    "Daring ideas are like chessmen moved forward. They may be beaten, but they may start a winning game. — Goethe",
+    "Have a heart that never hardens, a temper that never tires, and a touch that never hurts. — Charles Dickens",
+    "The history of the world is none other than the progress of the consciousness of freedom. — Hegel",
+    "Language is also a medium of domination and social force. It serves to legitimize relations of organized power. — Jürgen Habermas",
+    "I am done with great things and big things, great institutions and big success, and I am for those tiny, invisible molecular moral forces that work from individual to individual. — William James",
+    "Knowing is not enough; we must apply. Willing is not enough; we must do. — Goethe",
+    "You don't have to burn books to destroy a culture. Just get people to stop reading them. — Ray Bradbury",
+    "Life changes in the instant. The ordinary instant. — Joan Didion",
+    "To understand the actual world as it is, not as we should wish it to be, is the beginning of wisdom. — Bertrand Russell",
+    "The only Zen you find on the tops of mountains is the Zen you bring up there. — Robert M. Pirsig",
+    "Transparency is a neoliberal dispositive. It forces everything to conform to communication. — Byung-Chul Han",
+    "It does not do harm to the mystery to know a little about it. — Richard Feynman",
+    "In this country American means white. Everybody else has to hyphenate. — Toni Morrison",
+    "Society can only be understood through a study of the messages and the communication facilities which belong to it. — Norbert Wiener",
+    "Be not afraid of life. Believe that life is worth living, and your belief will help create the fact. — William James",
+    "To begin by always thinking of love as an action rather than a feeling is one way in which anyone using the word in this manner automatically assumes accountability and responsibility. — bell hooks",
+    "If there's a book that you want to read, but it hasn't been written yet, then you must write it. — Toni Morrison",
+    "We cannot solve our problems with the same thinking we used when we created them. — Albert Einstein",
+    "I could not count the times during the average day when something would come up that I needed to tell him. — Joan Didion",
+    "The real man smiles in trouble, gathers strength from distress, and grows brave by reflection. — Thomas Paine",
+    "Patience is bitter, but its fruit is sweet. — Aristotle",
+    "An idea is always a generalization, and generalization is a property of thinking. To generalize means to think. — Hegel",
+    "He that would make his own liberty secure must guard even his enemy from oppression. — Thomas Paine",
+    "The single biggest problem in communication is the illusion that it has taken place. — George Bernard Shaw",
+    "Everything is hard before it is easy. — Goethe",
+    "Rules for happiness: something to do, someone to love, something to hope for. — Kant",
+    "Thinking without a banister — that is what I have been trying to do. — Hannah Arendt",
+    "A wonderful fact to reflect upon, that every human creature is constituted to be that profound secret and mystery to every other. — Charles Dickens",
+    "Courage is grace under pressure. — Ernest Hemingway",
+    "The thought of every age is reflected in its technique. — Norbert Wiener",
+    "People who say it cannot be done should not interrupt those who are doing it. — George Bernard Shaw",
+    "Knowing yourself is the beginning of all wisdom. — Aristotle",
+    "Do not fear to be eccentric in opinion, for every opinion now accepted was once eccentric. — Bertrand Russell",
+    "The creation of something new is not accomplished by the intellect but by the play instinct. — Carl Jung",
+    "Before you diagnose yourself with depression or low self-esteem, first make sure that you are not, in fact, just surrounded by assholes. — William Gibson",
+    "The learner always begins by finding fault, but the scholar sees the positive merit in everything. — Hegel",
+    "Digital communication makes it possible to communicate with the absent other; it removes the corporeal presence of the other. — Byung-Chul Han",
+    "Act as if what you do makes a difference. It does. — William James",
+    "Don't Panic. — Douglas Adams",
+    "A man's conscience and his judgment is the same thing, and as the judgment, so also the conscience, may be erroneous. — Hobbes",
+    "A common mistake that people make when trying to design something completely foolproof is to underestimate the ingenuity of complete fools. — Douglas Adams",
+    "There is nothing in which people more betray their character than in what they laugh at. — Goethe",
+    "If you want to be happy, be. — Leo Tolstoy",
+    "Nothing is so fatiguing as the eternal hanging on of an uncompleted task. — William James",
+    "It is sometimes an appropriate response to reality to go insane. — Philip K. Dick",
+    "I may disagree with what you say, but I will defend to the death your right to say it. — attributed to Voltaire",
+    "The art of being wise is the art of knowing what to overlook. — William James",
+    "A man who has not passed through the inferno of his passions has never overcome them. — Carl Jung",
+    "Any sufficiently advanced technology is indistinguishable from magic. — Arthur C. Clarke",
+    "Who controls the past controls the future. Who controls the present controls the past. — George Orwell",
+    "Custom is the great guide of human life. — David Hume",
+    "Travel far enough, you meet yourself. — David Mitchell",
+    "What we do is more important than what we say or what we say we believe. — bell hooks",
+    "Freeing yourself was one thing, claiming ownership of that freed self was another. — Toni Morrison",
+    "There are many men of principle in both parties in America, but there is no party of principle. — Alexis de Tocqueville",
+    "Except our own thoughts, there is nothing absolutely in our power. — René Descartes",
+    "An intelligent fool can make things bigger and more complex. It takes a touch of genius — and a lot of courage — to move in the opposite direction. — Albert Einstein",
+    "The most effective way to destroy people is to deny and obliterate their own understanding of their history. — George Orwell",
+    "We keep moving forward, opening new doors, and doing new things, because we're curious and curiosity keeps leading us down new paths. — Walt Disney",
+    "Love is or it ain't. Thin love ain't love at all. — Toni Morrison",
+    "Blessed are the curious, for they shall have adventures. — Lovelle Drachman",
+    "The secret of happiness is: Find something more important than you are and dedicate your life to it. — Daniel Dennett",
+    "Everyone thinks of changing the world, but no one thinks of changing himself. — Leo Tolstoy",
+    "Technology is nothing. What's important is that you have a faith in people, that they're basically good and smart, and if you give them tools, they'll do wonderful things with them. — Steve Jobs",
+    "To free us from the expectations of others, to give us back to ourselves — there lies the great, the singular power of self-respect. — Joan Didion",
+    "Thinking: the talking of the soul with itself. — Plato",
+    "The most beautiful thing we can experience is the mysterious. — Albert Einstein",
+    "The whole problem with the world is that fools and fanatics are always so certain of themselves, and wiser people so full of doubts. — Bertrand Russell",
+    "Everything that irritates us about others can lead us to an understanding of ourselves. — Carl Jung",
+    "The soul never thinks without a picture. — Aristotle",
+    "There is nothing to writing. All you do is sit down at a typewriter and bleed. — Ernest Hemingway",
+    "Life begins at the end of your comfort zone. — Neale Donald Walsch",
+    "The pre-Socratic Greek philosopher Parmenides taught that the only things that are real are things which never change. — Philip K. Dick",
+    "Be a philosopher; but, amidst all your philosophy, be still a man. — David Hume",
+    "No man's error becomes his own law, nor obliges him to persist in it. — Hobbes",
+    "Under conditions of tyranny, it is far easier to act than to think. — Hannah Arendt",
+    "The soul is the prison of the body. — Michel Foucault",
+    "The best people possess a feeling for beauty, the courage to take risks, the discipline to tell the truth, the capacity for sacrifice. — Ernest Hemingway",
+    "The sad truth is that most evil is done by people who never make up their minds to be good or evil. — Hannah Arendt",
+    "Even in the loneliest moments I have been there for myself. — Sanober Khan",
+    "Political language is designed to make lies sound truthful and murder respectable, and to give an appearance of solidity to pure wind. — George Orwell",
+    "No man's knowledge here can go beyond his experience. — John Locke",
+    "The basic tool for the manipulation of reality is the manipulation of words. — Philip K. Dick",
+    "A person hears only what they understand. — Goethe",
+    "Have the courage to use your own understanding. — Kant",
+    "All animals are equal, but some animals are more equal than others. — George Orwell",
+    "Living at risk is jumping off the cliff and building your wings on the way down. — Ray Bradbury",
+    "We learn from history that we do not learn from history. — Hegel",
+    "Without friends, no one would want to live, even if he had all other goods. — Aristotle",
+    "Grammar is a piano I play by ear. — Joan Didion",
+    "We are not only spectators but also actors, and the spectacle of our suffering has aesthetic value. — Byung-Chul Han",
+    "One ought, every day at least, to hear a little song, read a good poem, see a fine picture, and, if it were possible, to speak a few reasonable words. — Goethe",
+    "A loving heart is the truest wisdom. — Charles Dickens",
+    "Be kind, for everyone you meet is fighting a great battle. — Plato",
+    "As technology advances, it reverses the characteristics of every situation again and again. The age of automation is going to be the age of do it yourself. — Marshall McLuhan",
+    "To teach how to live without certainty, and yet without being paralyzed by hesitation, is perhaps the chief thing that philosophy, in our age, can still do for those who study it. — Bertrand Russell",
+    "The life of the mind is withdrawal from the world of appearances. — Hannah Arendt",
+    "Life is like riding a bicycle. To keep your balance, you must keep moving. — Albert Einstein",
+    "Three passions, simple but overwhelmingly strong, have governed my life: the longing for love, the search for knowledge, and unbearable pity for the suffering of mankind. — Bertrand Russell",
+    "We shape our tools and thereafter our tools shape us. — Marshall McLuhan",
+    "To live effectively is to live with adequate information. — Norbert Wiener",
+    "I write to define myself — an act of self-creation — part of the process of becoming. — Susan Sontag",
+    "I think, therefore I am. — René Descartes",
+    "We are an impossibility in an impossible universe. — Ray Bradbury",
+    "A great many people think they are thinking when they are merely rearranging their prejudices. — William James",
+    "Beware of false knowledge; it is more dangerous than ignorance. — George Bernard Shaw",
+    "One arranges flowers for oneself, not for others. — Hannah Arendt",
+    "There are dark shadows on the earth, but its lights are stronger in the contrast. — Charles Dickens",
+    "Live your life by a compass, not a clock. — Stephen Covey",
+    "The more you know, the more you realize you don't know. — Aristotle",
+    "Hope begins in the dark, the stubborn hope that if you just show up and try to do the right thing, the dawn will come. — Anne Lamott",
+    "Wise men speak because they have something to say; fools because they have to say something. — Plato",
+    "The richest genius, like the most fertile soil, when uncultivated, shoots up into the rankest weeds. — David Hume",
+    "The roots of education are bitter, but the fruit is sweet. — Aristotle",
+    "There exists, for everyone, a sentence — a series of words — that has the power to destroy you. — Philip K. Dick",
+    "The reasonable man adapts himself to the world: the unreasonable one persists in trying to adapt the world to himself. Therefore all progress depends on the unreasonable man. — George Bernard Shaw",
+    "If there is a God, whence proceed so many evils? If there is no God, whence cometh any good? — Boethius",
+    "What you get by achieving your goals is not as important as what you become by achieving your goals. — Zig Ziglar",
+    "Genius means little more than the faculty of perceiving in an unhabitual way. — William James",
+    "I haven't been everywhere, but it's on my list. — Susan Sontag",
+    "Knowledge is power. — Hobbes",
+    "I may not have gone where I intended to go, but I think I have ended up where I needed to be. — Douglas Adams",
+    "You must stay drunk on writing so reality cannot destroy you. — Ray Bradbury",
+    "The more we get out of the world the less we leave, and in the long run we shall have to pay our debts at a time that may be very inconvenient for our own survival. — Norbert Wiener",
+    "Jump, and you will find out how to unfold your wings as you fall. — Ray Bradbury",
+    "The mind is its own place, and in itself can make a heaven of hell, a hell of heaven. — John Milton",
+    "Visibility is a trap. — Michel Foucault",
+    "The task of universal pragmatics is to identify and reconstruct universal conditions of possible understanding. — Jürgen Habermas",
+    "Definitions belong to the definers, not the defined. — Toni Morrison",
+    "The observer, when he seems to himself to be observing a stone, is really, if physics is to be believed, observing the effects of the stone upon himself. — Bertrand Russell",
+    "Music is so naturally united with us that we cannot be free from it even if we so desired. — Boethius",
+    "The public sphere is constituted by open discussion of matters of general concern in which discursive argumentation is employed as the means. — Jürgen Habermas",
+    "There can be no doubt that all our knowledge begins with experience. — Kant",
+    "Today everyone is an auto-exploiting laborer in their own enterprise. — Byung-Chul Han",
+    "Happiness is not an ideal of reason, but of imagination. — Kant",
+    "If you can change your mind, you can change your life. — William James",
+    "If you surrendered to the air, you could ride it. — Toni Morrison",
+    "The meeting of two personalities is like the contact of two chemical substances: if there is any reaction, both are transformed. — Carl Jung",
+    "If you would be a real seeker after truth, it is necessary that at least once in your life you doubt, as far as possible, all things. — René Descartes",
+    "Storytelling reveals meaning without committing the error of defining it. — Hannah Arendt",
+    "Little by little, one travels far. — J.R.R. Tolkien",
+    "The presence of evil was something to be first recognized, then dealt with, survived, outwitted, triumphed over. — Toni Morrison",
+    "The soul takes nothing with her to the next world but her education and culture. — Plato",
+    "If we listened to our intellect, we'd never have a love affair. We'd never have a friendship. We'd never go into business because we'd be cynical. — Ray Bradbury",
+    "Divide each difficulty into as many parts as is feasible and necessary to resolve it. — René Descartes",
+    "When you want to know how things really work, study them when they're coming apart. — William Gibson",
+    "As soon as you trust yourself, you will know how to live. — Goethe",
+    "There is a wisdom of the head, and a wisdom of the heart. — Charles Dickens",
+    "The force of mind is only as great as its expression; its depth only as deep as its power to expand and lose itself. — Hegel",
+    "Let us read, and let us dance; these two amusements will never do any harm to the world. — Voltaire",
+    "We are not what happened to us. We are what we choose to become. — Carl Jung",
+    "Every man must act so as to make good fortune for himself. — Boethius",
+    "Leisure is the mother of philosophy. — Hobbes",
+    "The writer is either a practicing recluse or a delinquent, guilt-ridden one — or both. Usually both. — Susan Sontag",
+    "Everything you want is on the other side of fear. — Jack Canfield",
+    "In other living creatures, the ignorance of themselves is nature, but in men it is a vice. — Boethius",
+    "Suffering has been stronger than all other teaching, and has taught me to understand what your heart used to be. — Charles Dickens",
+    "We are not stuff that abides, but patterns that perpetuate themselves. — Norbert Wiener",
+    "Beauty of style and harmony and grace and good rhythm depend on simplicity. — Plato",
+    "There are worse crimes than burning books. One of them is not reading them. — Ray Bradbury",
+    "If you can't explain it simply, you don't understand it well enough. — Albert Einstein",
+    "The accumulation of knowledge is not wisdom. — Norbert Wiener",
+    "If any female feels she needs anything beyond herself to legitimate and validate her existence, she is already giving away her power to be self-defining. — bell hooks",
+    "The shoe that fits one person pinches another; there is no recipe for living that suits all cases. — Carl Jung",
+    "The brain is a machine for making decisions about actions. — Daniel Dennett",
+    "Begin to be now what you will be hereafter. — William James",
+    "The health of a democratic society may be measured by the quality of functions performed by private citizens. — Alexis de Tocqueville",
+    "There are only two ways to live your life. One is as though nothing is a miracle. The other is as though everything is a miracle. — Albert Einstein",
+    "The beginning is the most important part of the work. — Plato",
+    "If I could explain it to the average person, it wouldn't have been worth the Nobel Prize. — Richard Feynman",
+    "An army of principles can penetrate where an army of soldiers cannot. — Thomas Paine",
+    "Until you make the unconscious conscious, it will direct your life and you will call it fate. — Carl Jung",
+    "The function of freedom is to free someone else. — Toni Morrison",
+    "Was it only by dreaming or writing that I could find out what I thought? — Joan Didion",
+    "The highest forms of understanding we can achieve are laughter and human compassion. — Richard Feynman",
+    "If you have an apple and I have an apple and we exchange apples then you and I will still each have one apple. But if you have an idea and I have an idea and we exchange these ideas, then each of us will have two ideas. — George Bernard Shaw",
+    "Slow is smooth, smooth is fast. — Proverb",
+    "There can be no understanding between the hand and the brain unless the heart acts as mediator. — Thea von Harbou",
+    "There is nothing in the world so irresistibly contagious as laughter and good humor. — Charles Dickens",
+    "Simply by our courage in daring to speak from our hearts, and by keeping our words completely honest, we are transforming the world. — bell hooks",
+    "Thoughts without content are empty, intuitions without concepts are blind. — Kant",
+    "The mind is furnished with ideas by experience alone. — John Locke",
+    "Happiness is the meaning and the purpose of life, the whole aim and end of human existence. — Aristotle",
+    "Make up a story. Narrative is radical, creating us at the very moment it is being created. — Toni Morrison",
+    "An optimist may see a light where there is none, but why must the pessimist always run to blow it out? — René Descartes",
+    "The greatest discovery of my generation is that a human being can alter his life by altering his attitudes. — William James",
+    "Modernity is an unfinished project. — Jürgen Habermas",
+    "Do one thing every day that scares you. — Eleanor Roosevelt",
+    "Nothing great in the world has been accomplished without passion. — Hegel",
+    "The greatness of America lies not in being more enlightened than any other nation, but rather in her ability to repair her faults. — Alexis de Tocqueville",
+    "The way to get started is to quit talking and begin doing. — Walt Disney",
+    "All you have to do is write one true sentence. Write the truest sentence that you know. — Ernest Hemingway",
+    "The meaning of life is just to be alive. It is so plain and so obvious and so simple. And yet, everybody rushes around in a great panic as if it were necessary to achieve something beyond themselves. — Alan Watts",
+    "A word after a word after a word is power. — Margaret Atwood",
+    "A scholar is just a library's way of making another library. — Daniel Dennett",
+    "Everything is self-evident. — René Descartes",
+    "Design is not just what it looks like and feels like. Design is how it works. — Steve Jobs",
+    "One of the best guides to how to be self-loving is to give ourselves the love we are often dreaming about receiving from others. — bell hooks",
+    "Liberty cannot be established without morality, nor morality without faith. — Alexis de Tocqueville",
+    "If liberty means anything at all, it means the right to tell people what they do not want to hear. — George Orwell",
+    "Sometimes people try to destroy you, precisely because they recognize your power — not because they don't see it, but because they see it and they don't want it to exist. — bell hooks",
+    "The only interesting answers are those which destroy the questions. — Susan Sontag",
+    "The mountains are calling and I must go. — John Muir",
+    "Judge a man by his questions rather than his answers. — Voltaire",
+    "Democracy arises out of the notion that those who are equal in any respect are equal in all respects. — Aristotle",
+    "Stay hungry. Stay foolish. — Steve Jobs",
+    "You own everything that happened to you. Tell your stories. If people wanted you to write warmly about them, they should have behaved better. — Anne Lamott",
+    "Intelligence is really a kind of taste: taste in ideas. — Susan Sontag",
+    "The greatest weapon against stress is our ability to choose one thought over another. — William James",
+    "At some point in life the world's beauty becomes enough. — Toni Morrison",
+    "My country is the world, and my religion is to do good. — Thomas Paine",
+    "Time is not a line but a dimension, like the dimensions of space. — Margaret Atwood",
+    "The most beautiful experience we can have is the mysterious. It is the fundamental emotion that stands at the cradle of true art and true science. — Albert Einstein",
+    "The world we see that seems so insane is the result of a belief system that is not working. To perceive the world differently, we must be willing to change our belief system. — William James",
+    "Morality is not the doctrine of how we may make ourselves happy, but of how we may make ourselves worthy of happiness. — Kant",
+    "Every form of addiction is bad, no matter whether the narcotic be alcohol, morphine, or idealism. — Carl Jung",
+    "A generous heart is always glad to find out what is best for others. — Goethe",
+    "Quality is not an act, it is a habit. — Aristotle",
+    "The people who are crazy enough to think they can change the world are the ones who do. — Steve Jobs",
+    "The mind is the effect, not the cause. — Daniel Dennett",
+    "Every living thing is a sort of imperialist, seeking to transform as much as possible of its environment into itself. — Bertrand Russell",
+    "What is not started today is never finished tomorrow. — Goethe",
+    "Exhaustion and fatigue are a fundamental violence because they destroy all forms of community, all forms of togetherness. — Byung-Chul Han",
+    "A point of view can be a dangerous luxury when substituted for insight and understanding. — Marshall McLuhan",
+    "Reflect upon your present blessings, of which every man has plenty; not on your past misfortunes, of which all men have some. — Charles Dickens",
+    "Sometimes the appropriate response to reality is to go insane. — Philip K. Dick",
+    "No great mind has ever existed without a touch of madness. — Aristotle",
+    "There is nothing more frightful than ignorance in action. — Goethe",
+    "Immaturity is the inability to use one's understanding without guidance from another. — Kant",
+    "Where love rules, there is no will to power; and where power predominates, love is lacking. — Carl Jung",
+    "A mind that is stretched by a new experience can never go back to its old dimensions. — Oliver Wendell Holmes Jr.",
+    "We can easily forgive a child who is afraid of the dark; the real tragedy of life is when men are afraid of the light. — Plato",
+    "To hold a pen is to be at war. — Voltaire",
+    "Reason is, and ought only to be the slave of the passions, and can never pretend to any other office than to serve and obey them. — David Hume",
+    "The achievement-subject exploits itself until it burns out. — Byung-Chul Han",
+    "What gets measured gets managed. — Peter Drucker",
+    "Beauty in things exists in the mind which contemplates them. — David Hume",
+    "You have no responsibility to live up to what other people think you ought to accomplish. — Richard Feynman",
+    "He who would travel happily must travel light. — Antoine de Saint-Exupéry",
+    "The investigation of the truth is in one way difficult, in another easy. An indication of this is found in the fact that no one is able to attain the truth adequately, while, on the other hand, no one fails entirely. — Aristotle",
+    "These are the times that try men's souls. — Thomas Paine",
+    "The only way to discover the limits of the possible is to go beyond them into the impossible. — Arthur C. Clarke",
+    "What experience and history teach is this — that nations and governments have never learned anything from history, or acted upon any lessons they might have drawn from it. — Hegel",
+    "We tell ourselves stories in order to live. — Joan Didion",
+    "A ship in harbor is safe, but that is not what ships are built for. — John A. Shedd",
+    "The energy of the mind is the essence of life. — Aristotle",
+    "New opinions are always suspected, and usually opposed, without any other reason but because they are not already common. — John Locke",
+    "Character — the willingness to accept responsibility for one's own life — is the source from which self-respect springs. — Joan Didion",
+    "The world of the future will be an ever more demanding struggle against the limitations of our intelligence, not a comfortable hammock in which we can lie down to be waited upon by our robot slaves. — Norbert Wiener",
+    "In a time of deceit, telling the truth is a revolutionary act. — attributed to George Orwell",
+    "The most radical revolutionary will become a conservative the day after the revolution. — Hannah Arendt",
+    "Man's mind, once stretched by a new idea, never regains its original dimensions. — Oliver Wendell Holmes Sr.",
+    "I write entirely to find out what I'm thinking, what I'm looking at, what I see and what it means. What I want and what I fear. — Joan Didion",
+    "Seek not the favor of the multitude; it is seldom got by honest and lawful means. But seek the testimony of the few; and number not voices, but weigh them. — Kant",
+    "The transparency society is a society of suspicion and control. — Byung-Chul Han",
+    "I was born not knowing and have had only a little time to change that here and there. — Richard Feynman",
+    "We are what we repeatedly do. Excellence, then, is not an act, but a habit. — Aristotle",
+    "Power corresponds to the human ability not just to act but to act in concert. — Hannah Arendt",
+    "Two possibilities exist: either we are alone in the Universe or we are not. Both are equally terrifying. — Arthur C. Clarke",
+    "Write it. Shoot it. Publish it. Crochet it, sauté it, whatever. Make. — Joss Whedon",
+    "The only thing that can save the world is the reclaiming of the awareness of the world. That's what poetry does. — Allen Ginsberg",
+    "War does not determine who is right — only who is left. — Bertrand Russell",
+    "Freedom of conscience entails more dangers than authority and despotism. — Michel Foucault",
+    "Talent develops in tranquility, character in the full current of human life. — Goethe",
+    "The printing press transformed the structure of human thought and belief, not by transmitting ideas, but by creating new forms of knowledge. — Elizabeth Eisenstein",
+    "Fate acts when she comes to rule us like a mistress with her slaves. — Boethius",
+    "One of the penalties for refusing to participate in politics is that you end up being governed by your inferiors. — Plato",
+    "I am not what happened to me, I am what I choose to become. — Carl Jung",
+    "The measure of a man is what he does with power. — Plato",
+    "Two things fill the mind with ever new and increasing admiration and reverence: the starry heavens above me and the moral law within me. — Kant",
+    "I think it's much more interesting to live not knowing than to have answers which might be wrong. — Richard Feynman",
+    "Forgiveness is the key to action and freedom. — Hannah Arendt",
+    "Reality is that which, when you stop believing in it, doesn't go away. — Philip K. Dick",
+    "Who are the true philosophers? Those whose passion is to love the truth. — Plato",
+    "All our dreams can come true, if we have the courage to pursue them. — Walt Disney",
+    "We travel not to escape life, but for life not to escape us. — Anonymous",
+    "Where there is power, there is resistance. — Michel Foucault",
+    "For in every ill-turn of fortune the most unhappy sort of unfortunate man is the one who has been happy. — Boethius",
+    "The distinction between sanity and insanity is narrower than a razor's edge. — Philip K. Dick",
+    "A human being is a part of the whole called by us Universe. — Albert Einstein",
+    "As you enter positions of trust and power, dream a little before you think. — Toni Morrison",
+    "Nobody ever figures out what life is all about, and it doesn't matter. Explore the world. Nearly everything is really interesting if you look into it. — Richard Feynman",
+    "Knowing how to be solitary is central to the art of loving. When we can be alone, we can be with others without using them as a means of escape. — bell hooks",
+    "If God did not exist, it would be necessary to invent him. — Voltaire",
+    "The only way to do great work is to love what you do. — Steve Jobs",
+    "Genuine tragedies in the world are not conflicts between right and wrong. They are conflicts between two rights. — Hegel",
+    "Study hard what interests you the most in the most undisciplined, irreverent, and original manner possible. — Richard Feynman",
+    "The truth knocks on the door and you say, go away, I'm looking for the truth, and so it goes away. — Robert M. Pirsig",
+    "Pleasure in the job puts perfection in the work. — Aristotle",
+    "Generally speaking, the errors in religion are dangerous; those in philosophy only ridiculous. — David Hume",
+    "Words are the counters of wise men, and the money of fools. — Hobbes",
+    "Religion is a culture of faith; science is a culture of doubt. — Richard Feynman",
+    "Action, as distinguished from fabrication, is never possible in isolation; to be isolated is to be deprived of the capacity to act. — Hannah Arendt",
+    "The first principle is that you must not fool yourself — and you are the easiest person to fool. — Richard Feynman",
+    "A strange game. The only winning move is not to play. — WarGames",
+    "Every generation imagines itself to be more intelligent than the one that went before it, and wiser than the one that comes after it. — George Orwell",
+    "The pendulum of the mind alternates between sense and nonsense, not between right and wrong. — Carl Jung",
+    "Think for yourself and let others enjoy the privilege of doing so too. — Voltaire",
+    "Progress imposes not only new possibilities for the future but new restrictions. — Norbert Wiener",
+    "Mark this well, you proud men of action! You are, after all, nothing but unconscious instruments of the men of thought. — Hegel",
+    "Happiness depends upon ourselves. — Aristotle",
+    "Imagination is more important than knowledge. Knowledge is limited. Imagination encircles the world. — Albert Einstein",
+    "The trouble with the world is that the stupid are cocksure and the intelligent are full of doubt. — Bertrand Russell",
+    "You can't connect the dots looking forward; you can only connect them looking backwards. — Steve Jobs",
+    "The journey is the reward. — Chinese proverb",
+    "The American Republic will endure until the day Congress discovers that it can bribe the public with the public's money. — Alexis de Tocqueville",
+    "People will do anything, no matter how absurd, to avoid facing their own souls. — Carl Jung",
+    "Science is the knowledge of consequences, and dependence of one fact upon another. — Hobbes",
+    "The two most powerful warriors are patience and time. — Leo Tolstoy",
+    "Logic will get you from A to B. Imagination will take you everywhere. — Albert Einstein",
+    "A man sees in the world what he carries in his heart. — Goethe",
+    "Procrastination is the thief of time, collar him. — Charles Dickens",
+    "Go where you feel most alive. — Anonymous",
+    "Human behavior flows from three main sources: desire, emotion, and knowledge. — Plato",
+    "Every man is guilty of all the good he did not do. — Voltaire",
+    "In a time of universal deceit, telling the truth is a revolutionary act. — George Orwell",
+    "The pleasure of finding things out is a truly extraordinary thing. — Richard Feynman",
+    "When the past no longer illuminates the future, the spirit walks in darkness. — Alexis de Tocqueville",
+    "There is but one cause of human failure, and that is man's lack of faith in his true self. — William James",
+    "If women are expected to do the same work as men, we must teach them the same things. — Plato",
+    "To live without philosophizing is in truth the same as keeping the eyes closed without attempting to open them. — René Descartes",
+    "The mind once enlightened cannot again become dark. — Thomas Paine",
+    "The new always happens against the overwhelming odds of statistical laws and their probability, which for all practical purposes amounts to certainty; the new therefore always appears in the guise of a miracle. — Hannah Arendt",
+    "Imagination is the beginning of creation. You imagine what you desire, you will what you imagine, and at last, you create what you will. — George Bernard Shaw",
+    "Disenchantment, whether it is a minor disappointment or a major shock, is the signal that things are moving into transition in our lives. — William Bridges",
+    "Hope is a waking dream. — Aristotle",
+    "Courage is knowing what not to fear. — Plato",
+    "Travel makes one modest. — Gustave Flaubert",
+    "Freedom is the freedom to say that two plus two make four. If that is granted, all else follows. — George Orwell",
+    "Promises are the uniquely human way of ordering the future. — Hannah Arendt",
+    "America is great because she is good. If America ceases to be good, America will cease to be great. — attributed to Alexis de Tocqueville",
+    "Magic is believing in yourself, if you can do that, you can make anything happen. — Goethe",
+    "The condition of man is a condition of war of everyone against everyone. — Hobbes",
+    "Nothing is worth more than this day. — Goethe",
+    "In all chaos there is a cosmos, in all disorder a secret order. — Carl Jung",
+    "Truth is found neither in the thesis nor the antithesis, but in an emergent synthesis which reconciles the two. — Hegel",
+    "Truth is a thing of this world: it is produced only by virtue of multiple forms of constraint. — Michel Foucault",
+    "Cyberspace. A consensual hallucination experienced daily by billions. — William Gibson",
+    "Those who can make you believe absurdities can make you commit atrocities. — Voltaire",
+    "The society of tiredness is a society of doping. — Byung-Chul Han",
+    "Almost everything will work again if you unplug it for a few minutes, including you. — Anne Lamott",
+    "To move, to breathe, to fly, to float — to gain all while you give. — Hunter S. Thompson",
+    "You see things; and you say 'Why?' But I dream things that never were; and I say 'Why not?' — George Bernard Shaw",
+    "Knowledge is not for knowing: knowledge is for cutting. — Michel Foucault",
+    "Don't think. Thinking is the enemy of creativity. It's self-conscious, and anything self-conscious is lousy. You can't try to do things. You simply must do things. — Ray Bradbury",
+    "A writer is always selling somebody out. — Joan Didion",
+    "The privilege of absurdity; to which no living creature is subject, but man only. — Hobbes",
+    "The owl of Minerva spreads its wings only with the falling of the dusk. — Hegel",
+    "Reading furnishes the mind only with materials of knowledge; it is thinking that makes what we read ours. — John Locke",
+    "We are all apprentices in a craft where no one ever becomes a master. — Ernest Hemingway",
+    "Nothing is miserable unless you think it so; and on the other hand, nothing brings happiness unless you are content with it. — Boethius",
+    "The Sun himself is weak when he first rises, and gathers strength and courage as the day gets on. — Charles Dickens",
+    "If there must be trouble, let it be in my day, that my child may have peace. — Thomas Paine",
+    "I would rather have questions that can't be answered than answers that can't be questioned. — Richard Feynman",
+    "The world is my country, all mankind are my brethren, and to do good is my religion. — Thomas Paine",
+    "You wanna fly, you got to give up the thing that weighs you down. — Toni Morrison",
+    "The function of the imagination is not to make strange things settled, so much as to make settled things strange. — G.K. Chesterton",
+    "Success does not consist in never making mistakes but in never making the same one a second time. — George Bernard Shaw",
+    "Electric communication will never be a substitute for the face of someone who with their soul encourages another person to be brave and true. — Charles Dickens",
+    "Once a year, go someplace you've never been before. — Dalai Lama",
+    "In a revolution, as in a novel, the most difficult part to invent is the end. — Alexis de Tocqueville",
+    "In this electronic age we see ourselves being translated more and more into the form of information, moving toward the technological extension of consciousness. — Marshall McLuhan",
+    "The consolation of philosophy is the last and greatest gift of the mind. — Boethius",
+    "The only way of discovering the limits of the possible is to venture a little way past them into the impossible. — Arthur C. Clarke",
+    "Progress is impossible without change, and those who cannot change their minds cannot change anything. — George Bernard Shaw",
+    "Common sense is not so common. — Voltaire",
+    "Music gives a soul to the universe, wings to the mind, flight to the imagination, and life to everything. — Plato",
+    "Nothing is wretched but what is thought so, and contrariwise, every estate is happy if he that bears it be content. — Boethius",
+    "Wherever you go, go with all your heart. — Confucius",
+    "Nothing is more wonderful than the art of being free, but nothing is harder to learn how to use than freedom. — Alexis de Tocqueville",
+    "No one is useless in this world who lightens the burdens of another. — Charles Dickens",
+    "The future is already here — it's just not very evenly distributed. — William Gibson",
+    "There are more ideas on earth than intellectuals imagine. And these ideas are more active, stronger, more resistant, more passionate than politicians think. — Michel Foucault",
+    "Adventure is worthwhile. — Aesop",
+    "Custom without truth is but agedness of error. — Hobbes",
+    "The best material model of a cat is another, or preferably the same, cat. — Norbert Wiener",
+    "Who would give a law to lovers? Love is unto itself a higher law. — Boethius",
+    "Whatever you can do, or dream you can do, begin it. Boldness has genius, power, and magic in it. — Goethe",
+    "People know what they do; frequently they know why they do what they do; but what they don't know is what what they do does. — Michel Foucault",
+    "Simple can be harder than complex: you have to work hard to get your thinking clean to make it simple. — Steve Jobs",
+    "Not all those who wander are lost. — J.R.R. Tolkien",
+    "The real is rational and the rational is real. — Hegel",
+    "Life isn't about finding yourself. Life is about creating yourself. — George Bernard Shaw",
+    "The successor to politics will be propaganda. Propaganda, not in the sense of a message or ideology, but as the impact of the whole technology of the times. — Marshall McLuhan",
+    "The imagination of nature is far, far greater than the imagination of man. — Richard Feynman",
+    "We become what we behold. We shape our tools, and thereafter our tools shape us. — Marshall McLuhan",
+    "I wrote my first novel because I wanted to read it. — Toni Morrison",
+    "It's kind of fun to do the impossible. — Walt Disney",
+    "The Metropolis was built as a monument to the hubris of those who believed they could contain the future. — Thea von Harbou",
+    "Fall in love with some activity, and do it! Nobody ever figures out what life is all about, and it doesn't matter. — Richard Feynman",
+    "The only way to make sense out of change is to plunge into it, move with it, and join the dance. — Alan Watts",
+    "We are made wise not by the recollection of our past, but by the responsibility for our future. — George Bernard Shaw",
+    "A wise man proportions his belief to the evidence. — David Hume",
+    "It is during our darkest moments that we must focus to see the light. — Aristotle",
+    "Out of the crooked timber of humanity, no straight thing was ever made. — Kant",
+    "Educating the mind without educating the heart is no education at all. — Aristotle",
+    "It is not necessary that whilst I live I live happily; but it is necessary that so long as I live I should live honorably. — Kant",
+    "Strive not to be a success, but rather to be of value. — Albert Einstein",
+    "Only the mob and the elite can be attracted by the momentum of totalitarianism itself. — Hannah Arendt",
+    "The moment we choose to love we begin to move against domination, against oppression. The moment we choose to love we begin to move towards freedom. — bell hooks",
+    "Your visions will become clear only when you can look into your own heart. — Carl Jung",
+    "What I cannot create, I do not understand. — Richard Feynman",
+    "Creativity is just connecting things. — Steve Jobs",
+    "The society of positivity is equally a society that robs us of community, of the common. — Byung-Chul Han",
+    "If a cluttered desk is a sign of a cluttered mind, of what, then, is an empty desk a sign? — Albert Einstein",
+    "You are a function of what the whole universe is doing in the same way that a wave is a function of what the whole ocean is doing. — Alan Watts",
+    "All great literature is one of two stories: a man goes on a journey, or a stranger comes to town. — Leo Tolstoy",
+    "Character is much easier kept than recovered. — Thomas Paine",
+    "Do stuff. Be clenched, curious. Not waiting for inspiration's shove or society's kiss on your forehead. — Susan Sontag",
+    "The medium is the message. — Marshall McLuhan",
+    "In the middle of difficulty lies opportunity. — Albert Einstein",
+    "We must always change, renew, rejuvenate ourselves; otherwise we harden. — Goethe",
+    "Take only memories, leave only footprints. — Chief Seattle",
+    "It was the best of times, it was the worst of times. — Charles Dickens",
+    "Being oppressed means the absence of choices. — bell hooks",
+    "What is a friend? A single soul dwelling in two bodies. — Aristotle",
+    "One of the symptoms of an approaching nervous breakdown is the belief that one's work is terribly important. — Bertrand Russell",
+    "Everyone hears only what he understands. — Goethe",
+    "Time moves in one direction, memory in another. — William Gibson",
+    "Curiosity is the lust of the mind. — Hobbes",
+    "Ideas are the source of all things. — Plato",
+    "You look at where you're going and where you are and it never makes sense, but then you look back at where you've been and a pattern seems to emerge. — Robert M. Pirsig",
+    "Total loyalty is possible only when fidelity is emptied of all concrete content, from which changes of mind might naturally arise. — Hannah Arendt",
+    "Do not go gentle into that good night. Rage, rage against the dying of the light. — Dylan Thomas",
+    "It was a pleasure to burn. — Ray Bradbury",
+    "The reading of all good books is like a conversation with the finest minds of past centuries. — René Descartes",
+    "I'm not much interested in the past. I'm interested in the future. — Philip K. Dick",
+    "If you look at history, innovation doesn't come just from giving people incentives; it comes from creating environments where their ideas can connect. — Steven Johnson",
+    "Lighthouses don't go running all over an island looking for boats to save; they just stand there shining. — Anne Lamott",
+    "The street finds its own uses for things. — William Gibson",
+    "I have been bent and broken, but I hope into a better shape. — Charles Dickens",
+    "The measure of intelligence is the ability to change. — Albert Einstein",
+    "Act in such a way that you treat humanity, whether in your own person or in the person of any other, never merely as a means to an end, but always at the same time as an end. — Kant",
+    "Your time is limited, so don't waste it living someone else's life. — Steve Jobs",
+    "I cannot but bless the memory of Julius Caesar, for the great esteem he expressed for fat men and his aversion to lean ones. — David Hume",
+    "Here's to the crazy ones. The misfits. The rebels. The troublemakers. The round pegs in the square holes. The ones who see things differently. — Steve Jobs",
+    "Somewhere, something incredible is waiting to be known. — Carl Sagan",
+    "The identity that we ascribe to the mind of man is only a fictitious one. — David Hume",
+    "The good life is one inspired by love and guided by knowledge. — Bertrand Russell",
+    "Reality is created by the mind. We can change our reality by changing our mind. — Plato",
+    "Of all forms of caution, caution in love is perhaps the most fatal to true happiness. — Bertrand Russell",
+    "Writing and reading decrease our sense of isolation. They deepen and widen and expand our sense of life. — Anne Lamott",
+    "The world as we have created it is a process of our thinking. It cannot be changed without changing our thinking. — Albert Einstein",
+    "She is a friend of my mind. She gather me. The pieces I am, she gather them and give them back to me in all the right order. — Toni Morrison",
+    "Nothing is more surprising than the easiness with which the many are governed by the few. — David Hume",
+    "I learned very early the difference between knowing the name of something and knowing something. — Richard Feynman",
+    "The greatest use of a life is to spend it on something that will outlast it. — William James",
+    "The further a society drifts from the truth, the more it will hate those that speak it. — George Orwell",
+    "I have no special talents. I am only passionately curious. — Albert Einstein",
+    "Rarely, if ever, are any of us healed in isolation. Healing is an act of communion. — bell hooks",
+    "It is not reason which is the guide of life, but custom. — David Hume",
+    "The demand for certainty is one which is natural to man, but is nevertheless an intellectual vice. — Bertrand Russell",
+    "The mediator between head and hands must be the heart. — Metropolis",
+    "Twenty years from now you will be more disappointed by the things you didn't do than by the ones you did. — Sarah Frances Brown",
+    "The greatest minds are capable of the greatest vices as well as of the greatest virtues. — René Descartes",
+    "Education is the point at which we decide whether we love the world enough to assume responsibility for it. — Hannah Arendt",
+    "The map is not the territory. — Alfred Korzybski",
+    "If you want a quality, act as if you already had it. — William James",
+    "The practice of love is the most powerful antidote to the politics of domination. — bell hooks",
+    "Attention is vitality. It connects you with others. It makes you eager. Stay eager. — Susan Sontag",
+    "A self is not something one finds; it is something one creates. — Douglas Hofstadter",
+    "The pain of parting is nothing to the joy of meeting again. — Charles Dickens",
+    "Chance favors the connected mind. — Steven Johnson"
+  ];
+
+  var quoteAt = (typeof QUOTES !== "undefined" && QUOTES.length)
+    ? Math.floor(Math.random() * QUOTES.length)
+    : 0;
+
+  function nextQuote(){
+    if(typeof QUOTES === "undefined" || !QUOTES.length) return;
+    quoteAt = (quoteAt + 1) % QUOTES.length;
+    setQuote();
+  }
+
+  function setQuote(){
+    if(typeof QUOTES === "undefined" || !QUOTES.length) return;
+
+    var raw = String(QUOTES[quoteAt]);
+    var cut = raw.lastIndexOf(" — ");
+    var text = cut === -1 ? raw : raw.slice(0, cut);
+    var who  = cut === -1 ? ""  : raw.slice(cut + 3);
+
+    var el = $("quote");
+    el.innerHTML = "";
+
+    var textSpan = document.createElement("span");
+    textSpan.textContent = "“" + text.trim() + "”";
+    el.appendChild(textSpan);
+
+    if(who.trim()){
+      var line = document.createElement("span");
+      line.className = "who";
+      line.textContent = who.trim();
+      el.appendChild(line);
+    }
+
+    var skip = document.createElement("button");
+    skip.className = "skipquote";
+    skip.type = "button";
+    skip.title = "Show another quote";
+    skip.textContent = "next quote";
+    skip.addEventListener("click", nextQuote);
+    el.appendChild(skip);
+  }
+
+  function favList(){
+    try{ return JSON.parse(store("favs") || "null") || FAVORITES.slice(); }
+    catch(e){ return FAVORITES.slice(); }
+  }
+  function favSave(list){
+    store("favs", JSON.stringify(list));
+    renderFav();
+    if(!$("settingsMenu").hidden) renderFavMenu();
+  }
+  function isFav(photo){
+    if(!photo) return false;
+    var l = favList();
+    for(var i=0;i<l.length;i++) if(l[i].url === photo.url) return true;
+    return false;
+  }
+  function toggleFav(){
+    if(!current) return;
+    var l = favList(), out = [], found = false;
+    for(var i=0;i<l.length;i++){
+      if(l[i].url === current.url){ found = true; }
+      else { out.push(l[i]); }
+    }
+    if(!found){
+      out.push({
+        url:   current.url,
+        thumb: current.thumb || "",
+        place: labelFor(current),
+        by:    current.by || "",
+        link:  current.link || "",
+        saved: new Date().toISOString().slice(0,10)
+      });
+    }
+    favSave(out);
+  }
+  function renderFav(){
+    var btn = $("favBtn");
+    if(!btn) return;
+    var on = isFav(current);
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.title = on ? "Remove from favorites" : "Save this photo to favorites";
+  }
+  function initFav(){
+    $("favBtn").addEventListener("click", toggleFav);
+    renderFav();
+  }
+
+  function thumbUrl(fav){
+    if(fav.thumb) return fav.thumb;
+    return String(fav.url || "")
+      .replace(/([?&])fit=crop/, "$1fit=max")
+      .replace(/([?&])crop=[^&]*/, "$1")
+      .replace(/([?&])h=\d+/, "$1")
+      .replace(/([?&])w=\d+/, "$1w=400")
+      .replace(/([?&])q=\d+/, "$1q=60")
+      .replace(/\?&/, "?");
+  }
+
+  function menuOpen(){ return !$("settingsMenu").hidden; }
+  function closeMenu(){
+    $("settingsMenu").hidden = true;
+    $("settingsBtn").setAttribute("aria-expanded","false");
+  }
+  function openMenu(){
+    renderFavMenu();
+    $("settingsMenu").hidden = false;
+    $("settingsBtn").setAttribute("aria-expanded","true");
+  }
+
+  function renderFavMenu(){
+    var box = $("favMenuList");
+    var l = favList();
+    if(!l.length){
+      box.innerHTML = '<div class="menu-empty">No favorites yet — tap the heart.</div>';
+      return;
+    }
+    box.innerHTML = "";
+    l.forEach(function(f){
+      var b = document.createElement("button");
+      b.className = "menu-fav";
+      b.title = f.place || "Saved photo";
+      var im = document.createElement("img");
+      im.src = thumbUrl(f);
+      im.alt = f.place || "";
+      im.loading = "lazy";
+      b.appendChild(im);
+      b.addEventListener("click", function(){
+        var photo = {url:f.url, thumb:f.thumb, label:f.place, by:f.by, link:f.link};
+        cachePhoto(photo);   // a chosen favorite becomes today's photo too
+        showPhoto(photo);
+        closeMenu();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function initSettings(){
+    $("settingsBtn").addEventListener("click", function(e){
+      e.stopPropagation();
+      menuOpen() ? closeMenu() : openMenu();
+    });
+    $("nextPhoto").addEventListener("click", function(){
+      loadPhoto(true);
+      closeMenu();
+    });
+    document.addEventListener("click", function(e){
+      if(!menuOpen()) return;
+      if(!$("settingsMenu").contains(e.target) && e.target !== $("settingsBtn")) closeMenu();
+    });
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape" && menuOpen()) closeMenu();
+    });
+  }
+
+  function initSearch(){
+    var ov = $("overlay"), q = $("q");
+    function open(){ ov.classList.add("on"); q.value=""; q.focus(); }
+    function close(){ ov.classList.remove("on"); }
+    $("searchBtn").addEventListener("click", open);
+    document.addEventListener("keydown", function(e){
+      if(e.key === "/" && !ov.classList.contains("on")){
+        var tag = (document.activeElement||{}).tagName;
+        if(tag !== "INPUT"){ e.preventDefault(); open(); }
+      } else if(e.key === "Escape"){ close(); }
+    });
+    q.addEventListener("keydown", function(e){
+      if(e.key === "Enter" && q.value.trim()){
+        location.href = "https://www.google.com/search?q=" + encodeURIComponent(q.value.trim());
+      }
+    });
+    ov.addEventListener("click", function(e){ if(e.target === ov) close(); });
+  }
+
+  function initRename(){
+    $("placeName").addEventListener("click", function(){
+      if(!current) return;
+      var val = window.prompt(
+        "What is this place? (saved for this photo)",
+        labelFor(current)
+      );
+      if(val !== null && val.trim()){
+        store("name_" + (current.url || current.id), val.trim());
+        $("placeName").textContent = val.trim();
+        var l = favList(), changed = false;
+        for(var i=0;i<l.length;i++){
+          if(l[i].url === current.url){ l[i].place = val.trim(); changed = true; }
+        }
+        if(changed) favSave(l);
+      }
+    });
+  }
+
+  /* Swap Gerald's strut for a still idle during the pauses in his route,
+     so he isn't marching in place at the ends. Mirrors ger-pace's timing. */
+  function initGeraldPacing(){
+    var el = document.getElementById("gerald");
+    if(!el) return;
+    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+
+    var CYCLE = 19000;
+    // performance.now() is relative to page load, the same origin the CSS
+    // animations use — Date.now() (unix epoch) would drift against them.
+    // .walk has no delay of its own, so its cycle began at page load
+    var t0 = 0;
+
+    // ger-pace holds position at 0-6%, travels to 38%, holds to 52%,
+    // returns by 84%, then holds. He's only moving in those two travel spans.
+    function update(){
+      var t = (performance.now() - t0) % CYCLE;
+      var p = t / CYCLE;
+      var moving = (p >= .06 && p < .38) || (p >= .52 && p < .84);
+      el.classList.toggle("resting", !moving);
+    }
+    update();
+    setInterval(update, 120);
+  }
+
+  /* ---------- critter on/off switch ---------- */
+  function initCritterToggle(){
+    var btn = $("critterBtn");
+    if(!btn) return;
+
+    // default on; only an explicit "0" hides them
+    var on = store("critters") !== "0";
+
+    function apply(){
+      document.body.classList.toggle("no-critters", !on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.title = on ? "Hide Gerald & Octavian" : "Show Gerald & Octavian";
+    }
+
+    // set initial state without the ducking transition firing on load
+    document.body.classList.toggle("no-critters", !on);
+    apply();
+
+    btn.addEventListener("click", function(){
+      on = !on;
+      store("critters", on ? "1" : "0");
+      apply();
+    });
+  }
+
+  /* ---------- critters ---------- */
+  function initCritter(id, reactClass, reactMs){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var hit = el.querySelector(".hit");
+    if(!hit) return;
+
+    hit.addEventListener("mouseenter", function(){ el.classList.add("awake"); });
+    hit.addEventListener("mouseleave", function(){ el.classList.remove("awake"); });
+
+    hit.addEventListener("click", function(){
+      if(el.classList.contains(reactClass)) return;
+      el.classList.add(reactClass);
+      setTimeout(function(){ el.classList.remove(reactClass); }, reactMs);
+    });
+  }
+
+  buildClocks();
+  tick();
+  setInterval(tick, 1000);
+  loadWeather();
+  setInterval(loadWeather, 15*60*1000);
+  loadPhoto();
+  setQuote();
+  initSearch();
+  initRename();
+  initFav();
+  initSettings();
+  initCritterToggle();
+  initCritter("octavian", "hop", 700);
+  initCritter("gerald", "cluck", 600);
+  initGeraldPacing();
+})();
+</script>
+</body>
+</html>

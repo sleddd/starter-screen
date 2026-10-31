@@ -173,6 +173,26 @@
   }
   .fav.on{opacity:1}
   .fav.on svg{fill:#ff5a72; stroke:#ff5a72}
+  .nope{margin-left:-4px}
+  .nope svg{fill:none; stroke-linecap:round}
+  .nope.on svg{fill:rgba(255,255,255,.35)}
+  .menu.nope-menu{min-width:280px; max-width:340px}
+  .menu-blocked{display:flex; flex-wrap:wrap; gap:8px; padding:2px 12px 10px}
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 10px; border-radius:999px; cursor:pointer;
+    border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08);
+    color:#fff; font:inherit; font-size:12.5px;
+  }
+  .chip:hover{background:rgba(255,255,255,.18)}
+  .chip b{font-weight:400; opacity:.65}
+  .block-word{padding:0 12px 6px}
+  .block-word input{
+    width:100%; box-sizing:border-box; padding:8px 10px; border-radius:8px;
+    border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06);
+    color:#fff; font:inherit; font-size:13px; outline:none;
+  }
+  .block-word input:focus{border-color:rgba(255,255,255,.5)}
 
   /* ---------- settings popup ---------- */
   .place{position:relative}
@@ -545,11 +565,25 @@
         <div class="menu-sep"></div>
         <div class="menu-head">Favorites</div>
         <div class="menu-list" id="favMenuList"></div>
+        <div class="menu-sep"></div>
+        <div class="menu-head">Hidden (click to show again)</div>
+        <div class="menu-blocked" id="blockedList"></div>
+        <form class="block-word" id="blockWordForm">
+          <input id="blockWord" type="text" placeholder="Hide photos of… e.g. fog, pier, waterfall" autocomplete="off" spellcheck="false">
+        </form>
+      </div>
+
+      <div class="menu nope-menu" id="nopeMenu" hidden>
+        <div class="menu-head">Don't show again</div>
+        <div id="nopeOptions"></div>
       </div>
 
       <button id="placeName" title="Click to rename this photo's location">&nbsp;</button>
       <button id="favBtn" class="fav" title="Save this photo to favorites" aria-pressed="false">
         <svg viewBox="0 0 24 24"><path d="M12 20.4l-1.6-1.5C5.5 14.5 2.6 11.9 2.6 8.6 2.6 6 4.7 4 7.3 4c1.5 0 2.9.7 3.8 1.8h1.8C13.8 4.7 15.2 4 16.7 4c2.6 0 4.7 2 4.7 4.6 0 3.3-2.9 5.9-7.8 10.3z"/></svg>
+      </button>
+      <button id="nopeBtn" class="fav nope" title="Don't show this again" aria-expanded="false">
+        <svg viewBox="0 0 24 24"><path d="M17 3v11"/><path d="M9 18.1L10 14H4.9a2 2 0 0 1-1.9-2.5l2.3-7A2 2 0 0 1 7.2 3H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-2.8a2 2 0 0 0-1.8 1.1l-3.5 6.9A3 3 0 0 1 9 18.1z"/></svg>
       </button>
     </div>
     <div class="quote" id="quote"></div>
@@ -619,7 +653,7 @@
      so every Chrome/Edge browser connected to that file shares the same
      favorites, renames, critter setting and photo of the day. localStorage
      stays as the offline copy. Every browser is treated the same. */
-  var JSON_KEYS = {favs:1, photo_of_day:1};   // stored as objects in the file
+  var JSON_KEYS = {favs:1, photo_of_day:1, blocked:1};   // stored as objects in the file
   var syncHandle = null;                       // FileSystemFileHandle for prefs.json
   var syncState = "off";                       // off | needs-permission | on
   var syncTimer = null, syncBusy = false;
@@ -768,7 +802,7 @@
   // Redraw everything that reads from store() after the file changed it.
   function refreshFromPrefs(){
     renderFav();
-    if(menuOpen()) renderFavMenu();
+    if(menuOpen()){ renderFavMenu(); renderBlocked(); }
     refreshCritters();
     var p = cachedPhoto();
     if(p && (!current || p.url !== current.url)) showPhoto(p);
@@ -946,7 +980,8 @@
     if(!raw) return null;
     try{
       var saved = JSON.parse(raw);
-      if(saved && saved.day === todayKey() && saved.photo && saved.photo.url) return saved.photo;
+      if(saved && saved.day === todayKey() && saved.photo && saved.photo.url &&
+         !isBlocked(saved.photo)) return saved.photo;
     }catch(e){}
     return null;
   }
@@ -995,11 +1030,12 @@
       .catch(function(err){
         var msg = (err && err.message) || "";
         var hopeless = msg.indexOf("rate limit") !== -1 ||
-                       msg.indexOf("access key") !== -1;
+                       msg.indexOf("access key") !== -1 ||
+                       msg.indexOf("blocked") !== -1;
         if(!hopeless && tries < 3){ loadPhoto(true, tries + 1); return; }
         if(window.console) console.warn("Background unavailable:", msg);
         // Unsplash said no (hourly limit, offline...): show a favorite instead
-        var favs = favList();
+        var favs = favList().filter(function(f){ return !isBlocked({url:f.url}); });
         if(favs.length){
           var f = favs[Math.floor(Math.random() * favs.length)];
           var fp = {url:f.url, thumb:f.thumb, label:f.place, by:f.by, link:f.link};
@@ -1665,7 +1701,9 @@
     $("settingsBtn").setAttribute("aria-expanded","false");
   }
   function openMenu(){
+    closeNope();
     renderFavMenu();
+    renderBlocked();
     $("settingsMenu").hidden = false;
     $("settingsBtn").setAttribute("aria-expanded","true");
   }
@@ -1694,6 +1732,130 @@
         closeMenu();
       });
       box.appendChild(b);
+    });
+  }
+
+  /* ================= thumbs down =================
+     Saved as "blocked" ({photos, topics, labels, words}) through store(), so
+     it lands in prefs.json; fetch-photos.js reads it before every pick. */
+  var BLOCK_KINDS = ["photos", "topics", "labels", "words"], BLOCK_MAX_PHOTOS = 1000;
+  function blockedSaved(){
+    var b = null;
+    try{ b = JSON.parse(store("blocked") || "null"); }catch(e){}
+    if(!b || typeof b !== "object") b = {};
+    BLOCK_KINDS.forEach(function(k){ if(!Array.isArray(b[k])) b[k] = []; });
+    return b;
+  }
+  function blockSave(b){
+    b.photos = b.photos.slice(-BLOCK_MAX_PHOTOS);
+    store("blocked", JSON.stringify(b));
+    if(menuOpen()) renderBlocked();
+  }
+  function addBlock(b, kind, value){
+    if(value && b[kind].indexOf(value) === -1) b[kind].push(value);
+  }
+
+  function nopeOpen(){ return !$("nopeMenu").hidden; }
+  function closeNope(){
+    $("nopeMenu").hidden = true;
+    $("nopeBtn").setAttribute("aria-expanded","false");
+    $("nopeBtn").classList.remove("on");
+  }
+  function openNope(){
+    if(!current) return;
+    closeMenu();
+    var box = $("nopeOptions");
+    box.innerHTML = "";
+    function option(text, kind){
+      var b = document.createElement("button");
+      b.className = "menu-item";
+      b.textContent = text;
+      b.addEventListener("click", function(){ dislike(kind); });
+      box.appendChild(b);
+    }
+    option("This photo", "photos");
+    if(current.topic) option("Anything from \u201c" + current.topic + "\u201d", "topics");
+    if(current.label) option("All \u201c" + current.label + "\u201d photos", "labels");
+    $("nopeMenu").hidden = false;
+    $("nopeBtn").setAttribute("aria-expanded","true");
+    $("nopeBtn").classList.add("on");
+  }
+
+  // Block this photo (and its topic / caption if asked), drop it from
+  // favorites, and move on to a new one.
+  function dislike(kind){
+    if(!current) return;
+    var b = blockedSaved();
+    addBlock(b, "photos", current.id || current.url);
+    if(kind === "topics") addBlock(b, "topics", current.topic);
+    if(kind === "labels") addBlock(b, "labels", current.label);
+    blockSave(b);
+    var url = current.url, l = favList();
+    var out = l.filter(function(f){ return f.url !== url; });
+    if(out.length !== l.length) favSave(out);
+    closeNope();
+    loadPhoto(true);
+  }
+
+  function renderBlocked(){
+    var box = $("blockedList"), b = blockedSaved(), any = false;
+    box.innerHTML = "";
+    function chip(text, kindName, onClick){
+      var c = document.createElement("button");
+      c.type = "button";
+      c.className = "chip";
+      c.title = "Show these again";
+      c.textContent = text + " ";
+      var x = document.createElement("b");
+      x.textContent = kindName + " \u00d7";
+      c.appendChild(x);
+      c.addEventListener("click", function(e){
+        e.stopPropagation();          // keep the menu open after the chip goes
+        onClick();
+      });
+      box.appendChild(c);
+      any = true;
+    }
+    [["labels","caption"], ["topics","topic"], ["words","word"]].forEach(function(kv){
+      b[kv[0]].forEach(function(v){
+        chip(v, kv[1], function(){
+          b[kv[0]] = b[kv[0]].filter(function(x){ return x !== v; });
+          blockSave(b);
+        });
+      });
+    });
+    if(b.photos.length){
+      chip(b.photos.length + " photo" + (b.photos.length === 1 ? "" : "s"), "clear", function(){
+        if(!window.confirm("Allow all " + b.photos.length + " hidden photos to show again?")) return;
+        b.photos = [];
+        blockSave(b);
+      });
+    }
+    if(!any){
+      box.innerHTML = '<div class="menu-empty">Nothing hidden \u2014 use the thumbs-down on a photo.</div>';
+    }
+  }
+
+  function initNope(){
+    $("nopeBtn").addEventListener("click", function(e){
+      e.stopPropagation();
+      nopeOpen() ? closeNope() : openNope();
+    });
+    $("blockWordForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var w = $("blockWord").value.trim().toLowerCase();
+      if(!w) return;
+      var b = blockedSaved();
+      addBlock(b, "words", w);
+      blockSave(b);
+      $("blockWord").value = "";
+      if(current && isBlocked(current)) loadPhoto(true);
+    });
+    document.addEventListener("click", function(e){
+      if(nopeOpen() && !$("nopeMenu").contains(e.target) && e.target !== $("nopeBtn")) closeNope();
+    });
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape" && nopeOpen()) closeNope();
     });
   }
 
@@ -2339,6 +2501,7 @@
     started = true;
     loadPhoto();
     initFav();
+    initNope();
     initCritterToggle();
     initSounds();
   }

@@ -8,7 +8,7 @@
  */
 
 /* Your Unsplash Access Key. */
-var UNSPLASH_ACCESS_KEY = "";
+var UNSPLASH_ACCESS_KEY = "i3F6HGaeCMQW7nnXEen3rHLv-QUTtpeTMbEt2J8QjUA";
 
 /* Topic -> the caption shown on screen. Edit freely; add or remove lines.
    `q` is what gets searched, `label` is what you see bottom-left.
@@ -99,6 +99,14 @@ var TOPICS = [
   { q: "summer lake mountains",                label: "summer", season: "summer" }
 ];
 
+/* Never show these. The thumbs-down button adds to this list for you (it's
+   saved in prefs.json as "blocked", and the gear menu can undo entries);
+   anything typed here is blocked too.
+     photos: Unsplash photo ids            topics: a `q` from the list above
+     labels: a whole caption (e.g. "hawaii") words:  any word in a photo's
+                                                     description, e.g. "fog" */
+var BLOCKED = { photos: [], topics: [], labels: [], words: [] };
+
 /* Starting favorites, used only when a browser has none saved yet.
    Saved favorites and settings live in prefs.json (browsers read it
    through prefs.js). */
@@ -118,17 +126,42 @@ function currentSeason() {
    evenly between its labels (nature / paradise / hawaii) however long each
    list is. */
 function pickTopic() {
-  var season = currentSeason(), seasonal = [], byLabel = {};
+  var season = currentSeason(), seasonal = [], byLabel = {}, bl = blockList();
   TOPICS.forEach(function (t) {
+    if (topicBlocked(t, bl)) return;
     if (!t.season) (byLabel[t.label] = byLabel[t.label] || []).push(t);
     else if (t.season === season) seasonal.push(t);
   });
-  var list = seasonal;
-  if (!seasonal.length || Math.random() >= 0.45) {
-    var labels = Object.keys(byLabel);
+  var list = seasonal, labels = Object.keys(byLabel);
+  if (labels.length && (!seasonal.length || Math.random() >= 0.45)) {
     list = byLabel[labels[Math.floor(Math.random() * labels.length)]];
   }
-  return list[Math.floor(Math.random() * list.length)];
+  return list.length ? list[Math.floor(Math.random() * list.length)] : null;
+}
+
+/* The thumbs-down list: BLOCKED above plus what's been saved from the page
+   (localStorage "sp_blocked", mirrored from prefs.json). */
+function blockList() {
+  var saved = readJSON("sp_blocked", {}), bl = {};
+  ["photos", "topics", "labels", "words"].forEach(function (k) {
+    bl[k] = (BLOCKED[k] || []).concat(Array.isArray(saved[k]) ? saved[k] : []);
+  });
+  var words = bl.words.filter(Boolean).map(function (w) {
+    return String(w).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+  });
+  bl.wordRe = words.length ? new RegExp("\\b(" + words.join("|") + ")s?\\b", "i") : null;
+  return bl;
+}
+function topicBlocked(t, bl) {
+  return bl.topics.indexOf(t.q) !== -1 || bl.labels.indexOf(t.label) !== -1 ||
+         !!(bl.wordRe && bl.wordRe.test(t.q));
+}
+function isBlocked(photo, bl) {
+  bl = bl || blockList();
+  return bl.photos.indexOf(photo.id || photo.url) !== -1 ||
+         (photo.topic && bl.topics.indexOf(photo.topic) !== -1) ||
+         (photo.label && bl.labels.indexOf(photo.label) !== -1) ||
+         !!(bl.wordRe && bl.wordRe.test((photo.desc || "") + " " + (photo.topic || "")));
 }
 
 /* Only proper desktop wallpapers: big, wide, editor-picked, in colour, and
@@ -268,6 +301,7 @@ function toPhoto(p, topic) {
     thumb: thumb,
     label: topic.label,          // caption comes from the query that found it
     topic: topic.q,
+    desc:  describe(p),          // for the thumbs-down word list
     by:    (p.user && p.user.name) || "",
     link:  (p.links && p.links.html) || ""
   };
@@ -327,7 +361,8 @@ function writePool(pool) {
 var lastTopic = null;
 function fromPool() {
   var seen = seenIds();
-  var pool = readPool().filter(function (x) { return !isSeen(x.photo, seen); }), topics = {};
+  var bl = blockList();
+  var pool = readPool().filter(function (x) { return !isSeen(x.photo, seen) && !isBlocked(x.photo, bl); }), topics = {};
   pool.forEach(function (x) { topics[x.photo.topic] = true; });
   if (Object.keys(topics).length < 3) return null;
   var choices = pool.filter(function (x) { return x.photo.topic !== lastTopic; });
@@ -342,6 +377,7 @@ function getRandomPhoto() {
   if (pooled) { lastTopic = pooled.topic; markSeen(pooled); return Promise.resolve(pooled); }
 
   var topic = pickTopic();
+  if (!topic) return Promise.reject(new Error("every topic is blocked (thumbs-down list)"));
 
   function search(page) {
     // Over the hourly limit recently: don't ask again yet. Every refused
@@ -373,10 +409,10 @@ function getRandomPhoto() {
   return search(pageFor(topic))
   .then(function (data) {
     if (data && data.total_pages) rememberPages(topic, data.total_pages);
-    var seen = seenIds();
+    var seen = seenIds(), bl = blockList();
     var photos = bestPhotos((data && data.results) || [])
       .map(function (p) { return toPhoto(p, topic); })
-      .filter(function (ph) { return ph && !isSeen(ph, seen); });
+      .filter(function (ph) { return ph && !isSeen(ph, seen) && !isBlocked(ph, bl); });
     if (!photos.length) throw new Error('no good photos for "' + topic.q + '"');
 
     var i = Math.floor(Math.random() * photos.length);

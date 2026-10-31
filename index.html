@@ -70,6 +70,51 @@
   .critter-toggle[aria-pressed="false"] svg .rocker{transform:translateY(6px)}
   .critter-toggle[aria-pressed="false"]{opacity:.5}
 
+  /* ---------- nature sounds ---------- */
+  .sounds{position:relative}
+  .tool.playing{opacity:1}
+  .tool.playing::after{
+    content:""; width:4px; height:4px; border-radius:50%;
+    background:currentColor; margin-top:-1px;
+  }
+  .sound-panel{
+    position:absolute; top:calc(100% + 14px); left:0; width:420px;
+    max-height:calc(100vh - 90px); overflow-y:auto;
+    background:rgba(22,22,24,.86);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:14px; padding:10px;
+    box-shadow:0 12px 40px rgba(0,0,0,.5);
+    z-index:30; text-align:left;
+  }
+  .sound-panel[hidden]{display:none}
+  .sound-grid{
+    display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;
+    padding:0 2px 4px;
+  }
+  .sound{
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    padding:14px 4px 11px; border:1px solid transparent; border-radius:10px;
+    background:none; color:#fff; font:inherit; font-size:12px; letter-spacing:.2px;
+    cursor:pointer; opacity:.55; transition:opacity .18s, background .18s, border-color .18s;
+  }
+  .sound:hover{opacity:.9; background:rgba(255,255,255,.07)}
+  .sound.on{opacity:1; background:rgba(255,255,255,.13); border-color:rgba(255,255,255,.2)}
+  .sound svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.5;
+             stroke-linecap:round;stroke-linejoin:round}
+  .sound-subhead{padding-top:14px}
+  .sound-mix{padding:8px 0 0}
+  .sound-mix[hidden]{display:none}
+  .mix-row{
+    display:flex; align-items:center; gap:10px; padding:5px 12px;
+    font-size:12.5px; letter-spacing:.2px;
+  }
+  .mix-row svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;
+               stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;opacity:.9}
+  .mix-name{width:62px; flex-shrink:0; opacity:.9}
+  .mix-row input{flex:1; min-width:0; accent-color:#fff; cursor:pointer}
+  .sound-vol{padding:8px 12px 6px}
+
   .clocks{
     display:flex; align-items:flex-start; gap:30px;
     flex-wrap:wrap; justify-content:flex-end;
@@ -456,6 +501,29 @@
           <rect class="rocker" x="9.5" y="5.5" width="5" height="7" rx="1.2"/>
         </svg>
       </button>
+
+      <div class="sounds">
+        <button class="tool" id="soundBtn" title="Nature sounds" aria-expanded="false">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 15v-3a8 8 0 0 1 16 0v3"/>
+            <path d="M4 15h2.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>
+            <path d="M20 15h-2.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1H19a1 1 0 0 0 1-1z"/>
+          </svg>
+        </button>
+        <div class="sound-panel" id="soundPanel" hidden>
+          <div class="menu-head">Nature sounds</div>
+          <div class="sound-grid" id="soundGrid"></div>
+          <div class="menu-head sound-subhead">Spa music</div>
+          <div class="sound-grid" id="musicGrid"></div>
+          <div class="sound-mix" id="soundMix" hidden></div>
+          <div class="menu-sep"></div>
+          <div class="sound-vol mix-row" title="Volume for all sounds">
+            <svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16.5 9a4 4 0 0 1 0 6"/><path d="M19 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+            <span class="mix-name">All</span>
+            <input type="range" id="soundVol" min="0" max="100" aria-label="Volume">
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="clocks" id="clocks"></div>
@@ -490,7 +558,7 @@
 
 </div>
 
-<div class="gerald" id="gerald">
+<div class="gerald" id="gerald" style="display:none">
   <div class="walk"><div class="turn"><div class="strut">
     <img src="gerald.png" alt="Gerald, a distinctly unimpressed chicken">
   </div></div></div>
@@ -509,6 +577,7 @@
 </div>
 
 <script src="fetch-photos.js"></script>
+<script src="prefs.js"></script>
 
 <script>
 (function(){
@@ -542,6 +611,258 @@
     }
     memStore[key] = String(v);
     try{ localStorage.setItem(key, v); }catch(e){}
+    if(lsGet("sp__migrated") === "1"){ markDirty(k); scheduleFlush(); }
+  }
+
+  /* ---------- prefs.json sync (Chrome / Edge) ----------
+     Everything store() saves is also written to prefs.json in this folder,
+     so every Chrome/Edge browser connected to that file shares the same
+     favorites, renames, critter setting and photo of the day. localStorage
+     stays as the offline copy. Every browser is treated the same. */
+  var JSON_KEYS = {favs:1, photo_of_day:1};   // stored as objects in the file
+  var syncHandle = null;                       // FileSystemFileHandle for prefs.json
+  var syncState = "off";                       // off | needs-permission | on
+  var syncTimer = null, syncBusy = false;
+  var refreshCritters = function(){};
+
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+
+  function toFile(k, v){
+    if(JSON_KEYS[k]){ try{ return JSON.parse(v); }catch(e){} }
+    return v;
+  }
+  function fromFile(v){ return typeof v === "string" ? v : JSON.stringify(v); }
+
+  // Keys changed here that haven't reached the file yet. Kept in
+  // localStorage so changes made while the file is unreachable aren't lost.
+  function dirtyKeys(){
+    try{ return JSON.parse(lsGet("sp__dirty") || "[]"); }catch(e){ return []; }
+  }
+  function markDirty(k){
+    var d = dirtyKeys();
+    if(d.indexOf(k) === -1){ d.push(k); lsSet("sp__dirty", JSON.stringify(d)); }
+  }
+
+  function idb(mode, fn){
+    return new Promise(function(resolve, reject){
+      var req = indexedDB.open("mymomentum", 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore("kv"); };
+      req.onerror = function(){ reject(req.error); };
+      req.onsuccess = function(){
+        var db = req.result, tx = db.transaction("kv", mode), r = fn(tx.objectStore("kv"));
+        tx.oncomplete = function(){ db.close(); resolve(r && r.result); };
+        tx.onerror = function(){ db.close(); reject(tx.error); };
+      };
+    });
+  }
+
+  function readPrefs(){
+    return syncHandle.getFile()
+      .then(function(f){ return f.text(); })
+      .then(function(t){
+        var o = t.trim() ? JSON.parse(t) : {};   // a broken file throws: never overwritten
+        return (o && typeof o === "object" && !Array.isArray(o)) ? o : {};
+      });
+  }
+  function writePrefs(obj){
+    return syncHandle.createWritable().then(function(w){
+      return w.write(JSON.stringify(obj, null, 2) + "\n").then(function(){ return w.close(); });
+    });
+  }
+
+  // Copy the file into memory + localStorage, skipping keys with unsent
+  // local changes.
+  function applyFile(file){
+    var dirty = dirtyKeys();
+    Object.keys(file).forEach(function(k){
+      if(dirty.indexOf(k) !== -1) return;
+      var v = fromFile(file[k]);
+      memStore["sp_" + k] = v;
+      lsSet("sp_" + k, v);
+    });
+  }
+
+  // One-time merge of this browser's localStorage into the file.
+  // Favorites are combined by url (the file's order and renames win);
+  // any other key is only filled in if the file doesn't have it.
+  function mergeLocal(file){
+    for(var i = 0; i < localStorage.length; i++){
+      var lk = localStorage.key(i);
+      if(!lk || lk.indexOf("sp_") !== 0 || lk.indexOf("sp__") === 0) continue;
+      var k = lk.slice(3), v = localStorage.getItem(lk);
+      if(k === "favs"){
+        var mine;
+        try{ mine = JSON.parse(v); }catch(e){ continue; }
+        if(!Array.isArray(mine)) continue;
+        var all = Array.isArray(file.favs) ? file.favs : [], have = {};
+        all.forEach(function(f){ if(f) have[f.url] = true; });
+        mine.forEach(function(f){
+          if(f && f.url && !have[f.url]){ have[f.url] = true; all.push(f); }
+        });
+        file.favs = all;
+      } else if(!(k in file)){
+        file[k] = toFile(k, v);
+      }
+    }
+    return file;
+  }
+
+  // Read the file, fold in this browser's changes, write it back if anything
+  // changed, then load the result locally.
+  function startSync(){
+    return readPrefs().then(function(file){
+      var before = JSON.stringify(file);
+      if(lsGet("sp__migrated") !== "1"){
+        // untouched copy of the old favorites, just in case
+        if(lsGet("sp__favs_backup") === null && lsGet("sp_favs") !== null){
+          lsSet("sp__favs_backup", lsGet("sp_favs"));
+        }
+        mergeLocal(file);
+      }
+      dirtyKeys().forEach(function(k){
+        var v = store(k);
+        if(v !== null && v !== undefined) file[k] = toFile(k, v);
+      });
+      var done = JSON.stringify(file) === before ? Promise.resolve() : writePrefs(file);
+      return done.then(function(){
+        lsSet("sp__migrated", "1");
+        lsSet("sp__dirty", "[]");
+        syncState = "on";
+        applyFile(file);
+      });
+    });
+  }
+
+  function scheduleFlush(){
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(flush, 300);
+  }
+  function flush(){
+    if(syncState !== "on" || syncBusy) return;
+    var keys = dirtyKeys();
+    if(!keys.length) return;
+    syncBusy = true;
+    lsSet("sp__dirty", "[]");     // anything changed during the write re-marks itself
+    var vals = {};
+    keys.forEach(function(k){ vals[k] = store(k); });
+    readPrefs()
+      .then(function(file){
+        keys.forEach(function(k){
+          if(vals[k] !== null && vals[k] !== undefined) file[k] = toFile(k, vals[k]);
+        });
+        return writePrefs(file);
+      })
+      .catch(function(e){
+        keys.forEach(markDirty);
+        syncState = "needs-permission";
+        armAutoConnect();
+        if(window.console) console.warn("Couldn't write prefs.json:", e);
+      })
+      .then(function(){
+        syncBusy = false;
+        if(dirtyKeys().length) scheduleFlush();
+      });
+  }
+
+  // Redraw everything that reads from store() after the file changed it.
+  function refreshFromPrefs(){
+    renderFav();
+    if(menuOpen()) renderFavMenu();
+    refreshCritters();
+    var p = cachedPhoto();
+    if(p && (!current || p.url !== current.url)) showPhoto(p);
+    else if(current) $("placeName").textContent = labelFor(current);
+  }
+
+  // The browser only allows file access from a click, so when prefs.json
+  // isn't connected the next click anywhere on the page connects it.
+  var autoArmed = false;
+  function armAutoConnect(){
+    if(autoArmed || typeof window.showOpenFilePicker !== "function") return;
+    autoArmed = true;
+    document.addEventListener("click", function autoConnect(){
+      document.removeEventListener("click", autoConnect, true);
+      autoArmed = false;
+      connectSync();
+    }, true);
+  }
+
+  // Runs from a click, so the browser lets it open the picker / ask.
+  function connectSync(){
+    var ready;
+    if(syncHandle && syncState === "needs-permission"){
+      ready = syncHandle.requestPermission({mode:"readwrite"});
+    } else {
+      ready = Promise.resolve().then(function(){ return window.showOpenFilePicker({
+        types:[{description:"Preferences", accept:{"application/json":[".json"]}}]
+      }); }).then(function(hs){
+        syncHandle = hs[0];
+        return syncHandle.requestPermission({mode:"readwrite"});
+      });
+    }
+    ready
+      .then(function(perm){
+        if(perm !== "granted") throw new Error("permission not granted");
+        return idb("readwrite", function(s){ return s.put(syncHandle, "prefsHandle"); });
+      })
+      .then(startSync)
+      .then(refreshFromPrefs)
+      .catch(function(e){
+        if(e && e.name === "AbortError") return;      // closed the picker
+        syncState = syncHandle ? "needs-permission" : "off";
+        if(window.console) console.warn("prefs.json sync failed:", e);
+      });
+  }
+
+  // Load prefs.json into the page. It arrives as window.PREFS through the
+  // prefs.js script tag (kept in step with prefs.json automatically), which
+  // works in every browser; fetch() is only a fallback. The file is the
+  // source of truth: its favorites replace whatever this browser had.
+  function loadPrefsJson(){
+    function use(file){
+      if(!file || typeof file !== "object" || Array.isArray(file)) return;
+      if(lsGet("sp__favs_backup") === null && lsGet("sp_favs") !== null){
+        lsSet("sp__favs_backup", lsGet("sp_favs"));   // old favorites, just in case
+      }
+      applyFile(file);
+    }
+    if(window.PREFS){ use(window.PREFS); return Promise.resolve(); }
+    return fetch("prefs.json", {cache:"no-store"})
+      .then(function(r){ return r.json(); })
+      .then(use)
+      .catch(function(e){
+        if(window.console) console.warn("Couldn't read prefs.json:", e);
+      });
+  }
+
+  // On load: always read prefs.json, then reuse the remembered file for
+  // writing if the browser still allows it.
+  function bootSync(){
+    return loadPrefsJson()
+      .then(function(){ return idb("readonly", function(s){ return s.get("prefsHandle"); }); })
+      .then(function(h){
+        if(!h) return;
+        syncHandle = h;
+        return h.queryPermission({mode:"readwrite"}).then(function(perm){
+          if(perm !== "granted"){ syncState = "needs-permission"; return; }
+          return startSync();
+        });
+      })
+      .catch(function(e){
+        syncState = syncHandle ? "needs-permission" : "off";
+        if(window.console) console.warn("prefs.json sync unavailable:", e);
+      });
+  }
+
+  function initSync(){
+    // Coming back to this tab: pick up changes another browser made.
+    document.addEventListener("visibilitychange", function(){
+      if(document.hidden || syncState !== "on" || syncBusy) return;
+      readPrefs()
+        .then(function(file){ applyFile(file); refreshFromPrefs(); })
+        .catch(function(){ syncState = "needs-permission"; armAutoConnect(); });
+    });
   }
 
   function timeIn(tz){
@@ -675,10 +996,19 @@
         var msg = (err && err.message) || "";
         var hopeless = msg.indexOf("rate limit") !== -1 ||
                        msg.indexOf("access key") !== -1;
-        if(!hopeless && tries < 1){ loadPhoto(true, tries + 1); return; }
+        if(!hopeless && tries < 3){ loadPhoto(true, tries + 1); return; }
+        if(window.console) console.warn("Background unavailable:", msg);
+        // Unsplash said no (hourly limit, offline...): show a favorite instead
+        var favs = favList();
+        if(favs.length){
+          var f = favs[Math.floor(Math.random() * favs.length)];
+          var fp = {url:f.url, thumb:f.thumb, label:f.place, by:f.by, link:f.link};
+          cachePhoto(fp);   // becomes today's photo, so new tabs don't fall back to the old one
+          showPhoto(fp);
+          return;
+        }
         $("placeName").textContent = "";
         renderCredit(null);
-        if(window.console) console.warn("Background unavailable:", msg);
       });
   }
 
@@ -1466,6 +1796,8 @@
     document.body.classList.toggle("no-critters", !on);
     apply();
 
+    refreshCritters = function(){ on = store("critters") !== "0"; apply(); };
+
     btn.addEventListener("click", function(){
       on = !on;
       store("critters", on ? "1" : "0");
@@ -1490,18 +1822,532 @@
     });
   }
 
+  /* ================= nature sounds ================= */
+  /* Entries with a `file` are recordings in sounds/ (credits in
+     sounds/CREDITS.txt); the rest are synthesized with the Web Audio API.
+     Toggle any mix on or off; the volume is remembered. */
+  var audio = null, master = null, noiseBufs = {}, playing = {};
+
+  function audioCtx(){
+    if(!audio){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      audio = new AC();
+      master = audio.createGain();
+      master.gain.value = soundVolume();
+      master.connect(audio.destination);
+    }
+    if(audio.state === "suspended") audio.resume();
+    return audio;
+  }
+
+  // 6 seconds of white / pink / brown noise, cross-faded so the loop is seamless.
+  function noiseBuf(kind){
+    if(noiseBufs[kind]) return noiseBufs[kind];
+    var len = audio.sampleRate * 6, fade = audio.sampleRate / 2;
+    var raw = new Float32Array(len + fade);
+    var b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0, last=0;
+    for(var i = 0; i < raw.length; i++){
+      var w = Math.random() * 2 - 1;
+      if(kind === "white"){ raw[i] = w; }
+      else if(kind === "pink"){
+        b0 = .99886*b0 + w*.0555179; b1 = .99332*b1 + w*.0750759; b2 = .969*b2 + w*.153852;
+        b3 = .8665*b3 + w*.3104856;  b4 = .55*b4 + w*.5329522;    b5 = -.7616*b5 - w*.016898;
+        raw[i] = (b0+b1+b2+b3+b4+b5+b6 + w*.5362) * .11; b6 = w * .115926;
+      } else {
+        last = (last + .02 * w) / 1.02; raw[i] = last * 3.5;
+      }
+    }
+    var buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0);
+    for(var j = 0; j < len; j++){
+      d[j] = j < fade ? raw[j] * (j / fade) + raw[len + j] * (1 - j / fade) : raw[j];
+    }
+    return (noiseBufs[kind] = buf);
+  }
+
+  function noiseSrc(kind){
+    var s = audio.createBufferSource();
+    s.buffer = noiseBuf(kind); s.loop = true;
+    s.start(0, Math.random() * 5);
+    return s;
+  }
+  function filt(type, freq, q){
+    var f = audio.createBiquadFilter();
+    f.type = type; f.frequency.value = freq;
+    if(q != null) f.Q.value = q;
+    return f;
+  }
+  function amp(v){ var g = audio.createGain(); g.gain.value = v; return g; }
+  function chain(){
+    for(var i = 0; i < arguments.length - 1; i++) arguments[i].connect(arguments[i+1]);
+    return arguments[arguments.length - 1];
+  }
+  // Slowly wobble an AudioParam around its current value.
+  function lfo(rate, depth, param){
+    var o = audio.createOscillator(), g = amp(depth);
+    o.frequency.value = rate;
+    chain(o, g, param);
+    o.start();
+    return o;
+  }
+  function panTo(out){
+    if(!audio.createStereoPanner) return out;
+    var p = audio.createStereoPanner();
+    p.pan.value = Math.random() * 1.6 - .8;
+    p.connect(out);
+    return p;
+  }
+
+  // A one-shot noise burst: rain drops, fire crackles, thunder cracks.
+  function burst(out, kind, type, freq, q, vol, attack, decay){
+    var t = audio.currentTime + .01;
+    var s = audio.createBufferSource(), g = amp(0);
+    s.buffer = noiseBuf(kind);
+    chain(s, filt(type, freq, q), g, out);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + attack);
+    g.gain.exponentialRampToValueAtTime(.0001, t + attack + decay);
+    s.start(t, Math.random() * 5);
+    s.stop(t + attack + decay + .05);
+  }
+
+  /* Each sound gets `a` with:
+       a.out            where to connect (fades in/out on toggle)
+       a.keep(node)     looping source to stop when toggled off
+       a.every(min, max, fn, first)  repeat fn at random intervals (ms);
+                        if fn returns a number, that's the next delay */
+  var SOUNDS = [
+    { id:"rain", label:"Rain",
+      icon:'<path d="M7 13h10a3.5 3.5 0 0 0 .4-6.98A5.5 5.5 0 0 0 6.6 7.1 3 3 0 0 0 7 13z"/><path d="M8 16.5l-1 2.5M12 16.5l-1 2.5M16 16.5l-1 2.5"/>',
+      file:"sounds/rain.m4a" },
+    { id:"thunder", label:"Thunder",
+      icon:'<path d="M7 13h10a3.5 3.5 0 0 0 .4-6.98A5.5 5.5 0 0 0 6.6 7.1 3 3 0 0 0 7 13z"/><path d="M12.5 14l-2 3.5h3l-2 3.5"/>',
+      file:"sounds/thunder.m4a" },
+    { id:"waves", label:"Waves",
+      icon:'<path d="M2 8c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/><path d="M2 13c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/><path d="M2 18c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/>',
+      build:function(a){
+        var lp = filt("lowpass", 400), g = amp(.15), lp2 = filt("lowpass", 2500), g2 = amp(0);
+        chain(a.keep(noiseSrc("brown")), lp, g, a.out);
+        chain(a.keep(noiseSrc("pink")), lp2, g2, a.out);
+        // one wave: swell, break (brighter hiss), wash back out
+        a.every(0, 0, function(){
+          var t = audio.currentTime, up = 2 + Math.random() * 1.5, down = 3 + Math.random() * 2.5;
+          var peak = .55 + Math.random() * .4;
+          g.gain.setValueAtTime(.15, t);
+          g.gain.linearRampToValueAtTime(peak, t + up);
+          g.gain.linearRampToValueAtTime(.15, t + up + down);
+          lp.frequency.setValueAtTime(400, t);
+          lp.frequency.linearRampToValueAtTime(1500, t + up);
+          lp.frequency.linearRampToValueAtTime(400, t + up + down);
+          g2.gain.setValueAtTime(0, t + up * .7);
+          g2.gain.linearRampToValueAtTime(peak * .3, t + up + .2);
+          g2.gain.linearRampToValueAtTime(0, t + up + down);
+          return (up + down) * 1000 + Math.random() * 1500;
+        }, 0);
+      }},
+    { id:"wind", label:"Wind",
+      icon:'<path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h6"/>',
+      build:function(a){
+        var bp = filt("bandpass", 500, .9), g = amp(.4);
+        chain(a.keep(noiseSrc("pink")), bp, g, a.out);
+        chain(a.keep(noiseSrc("brown")), filt("lowpass", 300), amp(.3), a.out);
+        a.every(1500, 4000, function(){
+          var t = audio.currentTime;
+          bp.frequency.setTargetAtTime(250 + Math.random() * 900, t, 1.2);
+          g.gain.setTargetAtTime(.2 + Math.random() * .8, t, 1.5);
+        }, 0);
+      }},
+    { id:"breeze", label:"Breeze",
+      icon:'<path d="M5 19c0-8 5-14 15-14 0 9-6 14-13 14"/><path d="M5 19c3-4 6-7 10-9"/>',
+      file:"sounds/wind.m4a" },
+    { id:"stream", label:"Stream",
+      icon:'<path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>',
+      file:"sounds/stream.m4a" },
+    { id:"fire", label:"Fire",
+      icon:'<path d="M12 21c-3.5 0-6-2.4-6-5.6 0-3.7 3-5.4 3.5-9.4 2 1.3 3 3 3.2 4.8 1-.8 1.6-2 1.8-3.3 2 1.8 3.5 4.3 3.5 7.6 0 3.4-2.5 5.9-6 5.9z"/><path d="M12 21a2.5 2.5 0 0 1-2.5-2.5c0-1.6 1.5-2.4 2.5-4 1 1.6 2.5 2.4 2.5 4A2.5 2.5 0 0 1 12 21z"/>',
+      file:"sounds/fire.m4a" },
+    { id:"birds", label:"Forest",
+      icon:'<path d="M12 3l-5 7h3l-4 6h12l-4-6h3z"/><path d="M12 16v5"/>',
+      file:"sounds/birds.m4a" },
+    { id:"crickets", label:"Crickets",
+      icon:'<path d="M19 14.5A7.5 7.5 0 1 1 9.5 5a6 6 0 0 0 9.5 9.5z"/><path d="M17 3.5v2M16 4.5h2"/>',
+      build:function(a){
+        chain(a.keep(noiseSrc("brown")), filt("lowpass", 250), amp(.15), a.out);
+        for(var c = 0; c < 3; c++){
+          (function(){
+            var o = a.keep(audio.createOscillator()), g = amp(0);
+            o.frequency.value = 4200 + Math.random() * 700;
+            chain(o, g, panTo(a.out));
+            o.start();
+            var gap = 450 + Math.random() * 450;
+            a.every(gap, gap + 150, function(){
+              var t = audio.currentTime + .01, pulses = 3 + Math.floor(Math.random() * 2);
+              for(var i = 0; i < pulses; i++){
+                var st = t + i * .03;
+                g.gain.setValueAtTime(0, st);
+                g.gain.linearRampToValueAtTime(.035, st + .006);
+                g.gain.linearRampToValueAtTime(0, st + .02);
+              }
+            }, Math.random() * 600);
+          })();
+        }
+      }},
+    { id:"gulls", label:"Seagulls",
+      icon:'<path d="M2 10c2.7-2.7 7-2.7 10 0 3-2.7 7.3-2.7 10 0"/><path d="M8 16.5c1.4-1.4 3.6-1.4 5 0 1.4-1.4 3.6-1.4 5 0"/>',
+      file:"sounds/gulls.m4a" },
+    { id:"beach", label:"Beach",
+      icon:'<path d="M3 12a9 9 0 0 1 18 0H3z"/><path d="M12 12l2.5 8"/><path d="M3 20h18"/>',
+      file:"sounds/beach.m4a" },
+    { id:"ocean", label:"Ocean",
+      icon:'<path d="M3 12c0-4 3.5-7 8-7 3 0 5 2 5 4.5 0 1.8-1.4 3-3 3-1.3 0-2.2-.9-2.2-2"/><path d="M2 16c2 0 2.5-1.5 5-1.5S9.5 16 12 16s3-1.5 5-1.5 3 1.5 5 1.5"/><path d="M2 20c2 0 2.5-1.5 5-1.5S9.5 20 12 20s3-1.5 5-1.5 3 1.5 5 1.5"/>',
+      file:"sounds/ocean.m4a" },
+    { id:"train", label:"Train",
+      icon:'<rect x="6" y="3" width="12" height="13" rx="3"/><path d="M6 9.5h12"/><path d="M9.5 13h.01M14.5 13h.01"/><path d="M8.5 16l-2 4.5M15.5 16l2 4.5"/>',
+      file:"sounds/train.m4a" },
+    { id:"heartbeat", label:"Heartbeat",
+      icon:'<path d="M2 12h4.5l2-5 3.5 10 2.5-5H22"/>',
+      build:function(a){
+        var lp = filt("lowpass", 180);
+        chain(lp, a.out);
+        function thump(t, f, vol){
+          var o = audio.createOscillator(), g = amp(0);
+          o.frequency.setValueAtTime(f, t);
+          o.frequency.exponentialRampToValueAtTime(f * .6, t + .15);
+          chain(o, g, lp);
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(vol, t + .015);
+          g.gain.exponentialRampToValueAtTime(.0001, t + .22);
+          o.start(t); o.stop(t + .25);
+        }
+        // lub-dub, around 60 bpm
+        a.every(0, 0, function(){
+          var t = audio.currentTime + .02;
+          thump(t, 62, 1);
+          thump(t + .28, 75, .6);
+          burst(lp, "brown", "lowpass", 200, null, .5, .005, .12);
+          return 60000 / (58 + Math.random() * 5);
+        }, 0);
+      }},
+    { id:"warp", label:"Warp",
+      icon:'<path d="M3 7h8M2 12h11M4 17h7"/><circle cx="18" cy="12" r="3"/>',
+      build:function(a){
+        // deep engine throb: two detuned saws beating through a resonant filter
+        var lp = filt("lowpass", 160, 4);
+        var o1 = a.keep(audio.createOscillator()), o2 = a.keep(audio.createOscillator());
+        o1.type = o2.type = "sawtooth";
+        o1.frequency.value = 41; o2.frequency.value = 41.6;
+        o1.connect(lp); o2.connect(lp);
+        chain(lp, amp(.18), a.out);
+        o1.start(); o2.start();
+        a.keep(lfo(.18, 70, lp.frequency));
+        chain(a.keep(noiseSrc("brown")), filt("lowpass", 140), amp(.6), a.out);
+        // faint airy whine riding on top
+        var hiss = filt("bandpass", 1100, 2.5);
+        chain(a.keep(noiseSrc("pink")), hiss, amp(.08), a.out);
+        a.keep(lfo(.07, 400, hiss.frequency));
+      }},
+    { id:"space", label:"Space",
+      icon:'<circle cx="12" cy="12" r="5"/><path d="M4.5 15.5c-2 2-2.3 3.7-1.3 4.3 1.8 1 7.4-1.8 11.8-6.2s7.2-10 6.2-11.8c-.6-1-2.3-.7-4.3 1.3"/>',
+      build:function(a){
+        // slow drifting drone chord
+        var bus = filt("lowpass", 1200);
+        chain(bus, a.out);
+        [55, 82.4, 110, 164.8, 220].forEach(function(f, i){
+          var o = a.keep(audio.createOscillator()), g = amp(i < 2 ? .09 : .05);
+          o.frequency.value = f * (1 + (Math.random() - .5) * .004);
+          chain(o, g, bus);
+          o.start();
+          a.keep(lfo(.03 + Math.random() * .05, .04, g.gain));
+        });
+        // solar wind
+        var bp = filt("bandpass", 500, 1.5);
+        chain(a.keep(noiseSrc("pink")), bp, amp(.06), a.out);
+        a.keep(lfo(.02, 300, bp.frequency));
+        // distant shimmering pings with echo
+        var dly = audio.createDelay(2), fb = amp(.45);
+        dly.delayTime.value = .45;
+        chain(dly, fb, dly);
+        chain(dly, amp(.5), a.out);
+        a.every(3000, 9000, function(){
+          var t = audio.currentTime + .02, o = audio.createOscillator(), g = amp(0);
+          o.frequency.value = [440, 523.3, 659.3, 784, 880][Math.floor(Math.random() * 5)];
+          chain(o, g, panTo(a.out));
+          g.connect(dly);
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(.05, t + .05);
+          g.gain.exponentialRampToValueAtTime(.0001, t + 4);
+          o.start(t); o.stop(t + 4.1);
+        }, 1500);
+      }},
+    { id:"frost", label:"Frost",
+      icon:'<path d="M12 2v20M3.4 7l17.2 10M3.4 17L20.6 7"/><path d="M9.5 4L12 6.5 14.5 4M9.5 20L12 17.5 14.5 20"/>',
+      build:function(a){
+        // thin whistling winter wind
+        var bp = filt("bandpass", 1600, 9), g = amp(1.5);
+        chain(a.keep(noiseSrc("white")), bp, g, a.out);
+        a.every(1500, 3500, function(){
+          var t = audio.currentTime;
+          bp.frequency.setTargetAtTime(1100 + Math.random() * 1400, t, 1.5);
+          g.gain.setTargetAtTime(.6 + Math.random() * 1.4, t, 1.2);
+        }, 0);
+        chain(a.keep(noiseSrc("pink")), filt("highpass", 2500), amp(.05), a.out);
+        // ice crystals
+        a.every(300, 2200, function(){
+          var t = audio.currentTime + .02, o = audio.createOscillator(), gg = amp(0), d = .3 + Math.random() * .5;
+          o.frequency.value = 2500 + Math.random() * 3500;
+          chain(o, gg, panTo(a.out));
+          gg.gain.setValueAtTime(0, t);
+          gg.gain.linearRampToValueAtTime(.02 + Math.random() * .03, t + .003);
+          gg.gain.exponentialRampToValueAtTime(.0001, t + d);
+          o.start(t); o.stop(t + d + .05);
+        }, 500);
+      }},,
+    { id:"campfire", label:"Campfire",
+      icon:'<path d="M12 15.5c-2 0-3.5-1.4-3.5-3.3 0-2 1.6-3 1.9-5.2 1.1.7 1.7 1.7 1.8 2.7.6-.5.9-1.1 1-1.8 1.1 1 1.8 2.3 1.8 4.1 0 1.9-1.4 3.5-3 3.5z"/><path d="M5 20.5l14-3M5 17.5l14 3"/>',
+      file:"sounds/campfire.m4a" },
+    { id:"lightrain", label:"Light rain",
+      icon:'<path d="M7 13h10a3.5 3.5 0 0 0 .4-6.98A5.5 5.5 0 0 0 6.6 7.1 3 3 0 0 0 7 13z"/><path d="M9 17v1.5M15 17v1.5M12 19.5V21"/>',
+      file:"sounds/lightrain.m4a" },
+    { id:"windowrain", label:"Window",
+      icon:'<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M12 3v18M4 12h16"/><path d="M8 6v2M16 7v1.5M8 15.5V17M16 15v2"/>',
+      file:"sounds/windowrain.m4a" },
+    { id:"clapping", label:"Clapping",
+      icon:'<path d="M7 11V6a1.5 1.5 0 0 1 3 0v4M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12M16 12V8.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.5A6.5 6.5 0 0 1 5 14.5V11a1.5 1.5 0 0 1 2-1.4"/>',
+      file:"sounds/clapping.m4a" },
+
+    // ---- spa music (your recordings from sounds/customsounds; these start
+    // from the top instead of a random spot)
+    { id:"piano", label:"Piano", group:"music",
+      icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 13v7M12 13v7M16 13v7"/><path d="M7 4v9h2V4M11 4v9h2V4M15 4v9h2V4"/>',
+      file:"sounds/piano.m4a" },
+    { id:"flute", label:"Flute", group:"music",
+      icon:'<path d="M3 19L19 3l2 2L5 21z"/><path d="M9 15h.01M12 12h.01M15 9h.01"/>',
+      file:"sounds/flute.m4a" },
+    { id:"handpan", label:"Handpan", group:"music",
+      icon:'<ellipse cx="12" cy="12" rx="9" ry="4.5"/><ellipse cx="12" cy="10.5" rx="2.5" ry="1"/><path d="M6.5 11.5h.01M17.5 11.5h.01M9 14h.01M15 14h.01"/>',
+      file:"sounds/handpan.m4a" },
+    { id:"bowls", label:"Bowls", group:"music",
+      icon:'<path d="M4 10h16a8 8 0 0 1-16 0z"/><path d="M9.5 20.5h5"/><path d="M10 6.5c.8-1 .8-2 0-3M14 6.5c.8-1 .8-2 0-3"/>',
+      file:"sounds/bowls.m4a" },
+    { id:"tibetan", label:"Tibetan", group:"music",
+      icon:'<path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9.5 22h5"/><path d="M15 9l5-6"/>',
+      file:"sounds/tibetan.m4a" },
+    { id:"chimes", label:"Chimes", group:"music",
+      icon:'<path d="M4 3h16M7 3v3M12 3v3M17 3v3"/><rect x="5.5" y="6" width="3" height="9" rx="1.2"/><rect x="10.5" y="6" width="3" height="12" rx="1.2"/><rect x="15.5" y="6" width="3" height="7" rx="1.2"/>',
+      file:"sounds/chimes.m4a" },
+    { id:"spa2", label:"Spa II", group:"music",
+      icon:'<path d="M12 20c-2.5-2.5-3-6.5 0-11 3 4.5 2.5 8.5 0 11z"/><path d="M12 20c-3.5 0-7.5-2-8.5-6.5 3.5-.5 6.5 1.5 8.5 6.5z"/><path d="M12 20c3.5 0 7.5-2 8.5-6.5-3.5-.5-6.5 1.5-8.5 6.5z"/>',
+      file:"sounds/spa2.m4a" },
+    { id:"tranquility", label:"Tranquility", group:"music",
+      icon:'<ellipse cx="12" cy="18" rx="7" ry="2.5"/><ellipse cx="12" cy="12.5" rx="5" ry="2"/><ellipse cx="12" cy="7.5" rx="3" ry="1.6"/>',
+      file:"sounds/tranquility.m4a" },
+    { id:"ambient", label:"Ambient", group:"music",
+      icon:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/>',
+      file:"sounds/ambient.m4a" },
+    { id:"jazz", label:"Jazz", group:"music",
+      icon:'<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+      file:"sounds/jazz.m4a" }
+  ];
+
+  // Recordings loop through two <audio> elements that cross-fade at the
+  // seam, so the repeat has no gap or click. They stay out of Web Audio on
+  // purpose: browsers silence file:// media routed into it.
+  var LOOP_FADE = 3;   // seconds; shorter for very short recordings
+  function loopFade(d){ return isFinite(d) ? Math.min(LOOP_FADE, d / 4) : LOOP_FADE; }
+  function startFileSound(s){
+    var players = [new Audio(s.file), new Audio(s.file)], cur = 0;
+    var level = 0, target = 1, timer;
+    players.forEach(function(p){ p.preload = "auto"; p.volume = 0; p._from = 0; });
+
+    function begin(p, at){
+      p._from = at;
+      try{ p.currentTime = at; }catch(e){}
+      var pr = p.play();
+      if(pr && pr.catch) pr.catch(function(){});
+    }
+    function tick(){
+      level = target > level ? Math.min(target, level + .05) : Math.max(target, level - .06);
+      var a = players[cur], b = players[1 - cur], dur = a.duration;
+      if(isFinite(dur) && b.paused && dur - a.currentTime <= loopFade(dur)){
+        begin(b, 0);
+        cur = 1 - cur;
+      }
+      players.forEach(function(p){
+        if(p.paused) return;
+        var d = p.duration, t = p.currentTime, fl = loopFade(d);
+        var f = Math.min(1, (t - p._from) / fl);
+        if(isFinite(d)) f = Math.min(f, (d - t) / fl);
+        p.volume = Math.max(0, Math.min(1, f * level * soundVolume() * soundLevel(s.id)));
+        if(isFinite(d) && d - t < .05) p.pause();
+      });
+      if(target === 0 && level === 0){
+        clearInterval(timer);
+        players.forEach(function(p){ p.pause(); p.removeAttribute("src"); p.load(); });
+      }
+    }
+
+    // start somewhere random in the recording, already at full loop level
+    var first = players[0];
+    first.addEventListener("loadedmetadata", function(){
+      if(s.group !== "music" && isFinite(first.duration) && first.duration > LOOP_FADE * 4){
+        try{ first.currentTime = Math.random() * (first.duration - LOOP_FADE * 3); }catch(e){}
+      }
+      first._from = first.currentTime - LOOP_FADE;
+    }, {once:true});
+    first._from = -LOOP_FADE;
+    var pr = first.play();
+    if(pr && pr.catch) pr.catch(function(){});
+    timer = setInterval(tick, 50);
+
+    playing[s.id] = function(){ target = 0; };
+  }
+
+  function startSound(s){
+    if(s.file) return startFileSound(s);
+    audioCtx();
+    var out = amp(0), mix = amp(soundLevel(s.id)), nodes = [], timers = [], alive = true;
+    chain(out, mix, master);
+    mixes[s.id] = mix;
+    s.build({
+      out: out,
+      keep: function(n){ nodes.push(n); return n; },
+      every: function(min, max, fn, first){
+        function run(){
+          if(!alive) return;
+          var next = fn();
+          timers.push(setTimeout(run, typeof next === "number" ? next : min + Math.random() * (max - min)));
+        }
+        timers.push(setTimeout(run, first == null ? min + Math.random() * (max - min) : first));
+      }
+    });
+    var t = audio.currentTime;
+    out.gain.setValueAtTime(0, t);
+    out.gain.linearRampToValueAtTime(1, t + 1.5);
+    playing[s.id] = function(){
+      alive = false;
+      timers.forEach(clearTimeout);
+      var t = audio.currentTime;
+      out.gain.cancelScheduledValues(t);
+      out.gain.setValueAtTime(out.gain.value, t);
+      out.gain.linearRampToValueAtTime(0, t + .8);
+      setTimeout(function(){
+        nodes.forEach(function(n){ try{ n.stop(); }catch(e){} });
+        out.disconnect(); mix.disconnect();
+        if(mixes[s.id] === mix) delete mixes[s.id];
+      }, 900);
+    };
+  }
+  function stopSound(id){
+    if(playing[id]){ playing[id](); delete playing[id]; }
+  }
+
+  function soundVolume(){
+    var v = parseFloat(store("sound_vol"));
+    return isNaN(v) ? .7 : v;
+  }
+
+  // Each sound's own level in the mix (0-1), remembered per sound.
+  var mixes = {};   // Web Audio gain node per playing synthesized sound
+  function soundLevel(id){
+    var v = parseFloat(store("sound_level_" + id));
+    return isNaN(v) ? 1 : v;
+  }
+  function setSoundLevel(id, v){
+    store("sound_level_" + id, String(v));
+    if(mixes[id]) mixes[id].gain.setTargetAtTime(v, audio.currentTime, .05);
+    // recordings pick the new level up on their next volume tick
+  }
+
+  function initSounds(){
+    var btn = $("soundBtn"), panel = $("soundPanel"), grid = $("soundGrid"), vol = $("soundVol");
+    var mixBox = $("soundMix");
+
+    function renderBtn(){ btn.classList.toggle("playing", Object.keys(playing).length > 0); }
+
+    // A volume slider for every sound that's on.
+    function renderMix(){
+      mixBox.innerHTML = "";
+      SOUNDS.forEach(function(s){
+        if(!playing[s.id]) return;
+        var row = document.createElement("label");
+        row.className = "mix-row";
+        row.innerHTML = '<svg viewBox="0 0 24 24">' + s.icon + '</svg><span class="mix-name">' + s.label + '</span>';
+        var r = document.createElement("input");
+        r.type = "range"; r.min = "0"; r.max = "100";
+        r.value = Math.round(soundLevel(s.id) * 100);
+        r.setAttribute("aria-label", s.label + " volume");
+        r.addEventListener("input", function(){ setSoundLevel(s.id, r.value / 100); });
+        row.appendChild(r);
+        mixBox.appendChild(row);
+      });
+      mixBox.hidden = !mixBox.children.length;
+    }
+    function closePanel(){ panel.hidden = true; btn.setAttribute("aria-expanded", "false"); }
+
+    SOUNDS.forEach(function(s){
+      var b = document.createElement("button");
+      b.className = "sound";
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.innerHTML = '<svg viewBox="0 0 24 24">' + s.icon + '</svg><span>' + s.label + '</span>';
+      b.addEventListener("click", function(){
+        if(playing[s.id]) stopSound(s.id); else startSound(s);
+        var on = !!playing[s.id];
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        renderBtn();
+        renderMix();
+      });
+      (s.group === "music" ? $("musicGrid") : grid).appendChild(b);
+    });
+
+    vol.value = Math.round(soundVolume() * 100);
+    vol.addEventListener("input", function(){
+      var v = vol.value / 100;
+      if(master) master.gain.setTargetAtTime(v, audio.currentTime, .05);
+      store("sound_vol", String(v));
+    });
+
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      panel.hidden = !panel.hidden;
+      btn.setAttribute("aria-expanded", panel.hidden ? "false" : "true");
+    });
+    document.addEventListener("click", function(e){
+      if(!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) closePanel();
+    });
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape" && !panel.hidden) closePanel();
+    });
+  }
+
   buildClocks();
   tick();
   setInterval(tick, 1000);
   loadWeather();
   setInterval(loadWeather, 15*60*1000);
-  loadPhoto();
   setQuote();
   initSearch();
   initRename();
-  initFav();
   initSettings();
-  initCritterToggle();
+  initSync();
+
+  // Wait for prefs.json (if connected) before drawing anything that reads
+  // saved settings. Never waits more than a second.
+  var started = false;
+  function startPrefs(){
+    if(started) return;
+    started = true;
+    loadPhoto();
+    initFav();
+    initCritterToggle();
+    initSounds();
+  }
+  bootSync().then(function(){
+    if(started) refreshFromPrefs();   // file arrived after the timeout
+    else startPrefs();
+    if(syncState !== "on") armAutoConnect();
+  });
+  setTimeout(startPrefs, 1000);
   initCritter("octavian", "hop", 700);
   initCritter("gerald", "cluck", 600);
   initGeraldPacing();

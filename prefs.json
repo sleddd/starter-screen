@@ -1,0 +1,297 @@
+{
+  "favs": [
+    {
+      "url": "https://images.unsplash.com/photo-1544945582-052b29cd29e4?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MzB8fHBhcmFkaXNlJTIwYmFja2dyb3VuZHxlbnwxfDB8fHwxNzkyNDIyNzkxfDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1544945582-052b29cd29e4?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MzB8fHBhcmFkaXNlJTIwYmFja2dyb3VuZHxlbnwxfDB8fHwxNzkyNDIyNzkxfDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "paradise",
+      "by": "Jailam Rashad",
+      "link": "https://unsplash.com/photos/shoreline-under-sky-Qe58SmRMcH4",
+      "saved": "2026-10-19"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1619045789728-276d605e1a7d?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OXx8cGFyYWRpc2UlMjBiYWNrZ3JvdW5kfGVufDF8MHx8fDE3OTI0MjI3OTF8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1619045789728-276d605e1a7d?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OXx8cGFyYWRpc2UlMjBiYWNrZ3JvdW5kfGVufDF8MHx8fDE3OTI0MjI3OTF8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "paradise",
+      "by": "Harry Gillen",
+      "link": "https://unsplash.com/photos/ocean-waves-crashing-on-shore-during-daytime-UnEc30IJ81E",
+      "saved": "2026-10-19"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1539634262233-7c0b48ab9503?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OHx8bmF0dXJlJTIwYmFja2dyb3VuZHxlbnwxfDB8fHwxNzkyNTEwMzM0fDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1539634262233-7c0b48ab9503?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OHx8bmF0dXJlJTIwYmFja2dyb3VuZHxlbnwxfDB8fHwxNzkyNTEwMzM0fDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Sebastian Boring",
+      "link": "https://unsplash.com/photos/drangarnir-sea-stacks-under-cloudy-sky-8zD7rs8UpxU",
+      "saved": "2026-10-20"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1782383618703-5117c444883b?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTJ8fG5hdHVyZSUyMHdhbGxwYXBlcnxlbnwxfDB8fHwxNzkyNTA5ODU1fDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1782383618703-5117c444883b?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTJ8fG5hdHVyZSUyMHdhbGxwYXBlcnxlbnwxfDB8fHwxNzkyNTA5ODU1fDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "martin bennie",
+      "link": "https://unsplash.com/photos/wooden-posts-in-patagonian-lake-at-sunrise-fIKwcBkoWIY",
+      "saved": "2026-10-20"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1775618189760-792fba0eb0f3?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OXx8bmF0dXJlJTIwYmFja2dyb3VuZHxlbnwxfDB8fHwxNzkyNTEwMzM0fDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1775618189760-792fba0eb0f3?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OXx8bmF0dXJlJTIwYmFja2dyb3VuZHxlbnwxfDB8fHwxNzkyNTEwMzM0fDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Uran Wang",
+      "link": "https://unsplash.com/photos/sunlight-streams-through-trees-onto-a-field-of-purple-flowers-TVORvlpH2ZY",
+      "saved": "2026-10-20"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1614531341773-3bff8b7cb3fc?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MjN8fG5hdHVyZSUyMGJhY2tncm91bmR8ZW58MXwwfHx8MTc5MjUxMDMzNHww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1614531341773-3bff8b7cb3fc?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MjN8fG5hdHVyZSUyMGJhY2tncm91bmR8ZW58MXwwfHx8MTc5MjUxMDMzNHww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Thomas Bennie",
+      "link": "https://unsplash.com/photos/green-trees-on-brown-grass-field-under-white-clouds-and-blue-sky-during-daytime-1jlJrr4XGkU",
+      "saved": "2026-10-20"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1511300636408-a63a89df3482?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8N3x8bmF0dXJlJTIwd2FsbHBhcGVyfGVufDF8MHx8fDE3OTI1MDk4NTV8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1511300636408-a63a89df3482?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8N3x8bmF0dXJlJTIwd2FsbHBhcGVyfGVufDF8MHx8fDE3OTI1MDk4NTV8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Luca Micheli",
+      "link": "https://unsplash.com/photos/vestrahorn-mountain-reflected-on-icelandic-beach-ruWkmt3nU58",
+      "saved": "2026-10-20"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1568323003715-8c0254336dfa?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8NHx8aWNlbGFuZCUyMGRyYW1hdGljJTIwd2F0ZXJmYWxsJTIwYmxhY2slMjBzYW5kfGVufDF8MHx8fDE3OTI1MTA5MTF8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1568323003715-8c0254336dfa?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8NHx8aWNlbGFuZCUyMGRyYW1hdGljJTIwd2F0ZXJmYWxsJTIwYmxhY2slMjBzYW5kfGVufDF8MHx8fDE3OTI1MTA5MTF8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Richard Dorran",
+      "link": "https://unsplash.com/photos/waterfalls-at-daytime-e56x9U4SaJs",
+      "saved": "2026-10-20"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1657023647725-7a3616ea54af?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8M3x8YWJzdHJhY3QlMjBuYXR1cmUlMjB0ZXh0dXJlfGVufDF8MHx8fDE3OTI1MTA5NTd8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1657023647725-7a3616ea54af?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8M3x8YWJzdHJhY3QlMjBuYXR1cmUlMjB0ZXh0dXJlfGVufDF8MHx8fDE3OTI1MTA5NTd8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Annie Spratt",
+      "link": "https://unsplash.com/photos/a-close-up-of-some-leaves-my1e7zB6c9E",
+      "saved": "2026-10-20"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1505330773179-208fcb226b94?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MjB8fG1pbGt5JTIwd2F5JTIwZ2FsYXh5JTIwc3RhcnJ5JTIwZGVzZXJ0fGVufDF8MHx8fDE3OTI1MTA5ODV8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1505330773179-208fcb226b94?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MjB8fG1pbGt5JTIwd2F5JTIwZ2FsYXh5JTIwc3RhcnJ5JTIwZGVzZXJ0fGVufDF8MHx8fDE3OTI1MTA5ODV8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Hugues de BUYER-MIMEURE",
+      "link": "https://unsplash.com/photos/stars-in-the-skies-at-night-kaW_eF3KVpk",
+      "saved": "2026-10-20"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1531956801324-df716337e0b9?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OXx8bWlsa3klMjB3YXklMjBnYWxheHklMjBzdGFycnklMjBkZXNlcnR8ZW58MXwwfHx8MTc5MzAyNzA1NXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1531956801324-df716337e0b9?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OXx8bWlsa3klMjB3YXklMjBnYWxheHklMjBzdGFycnklMjBkZXNlcnR8ZW58MXwwfHx8MTc5MzAyNzA1NXww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Photoholgic",
+      "link": "https://unsplash.com/photos/milky-way-galaxy-at-night-cnlAybuakYs",
+      "saved": "2026-10-26"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1772883882249-8021592cc2e9?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Mnx8bWFqZXN0aWMlMjBzZWElMjB0dXJ0bGUlMjBzd2ltbWluZyUyMGNsb3NlJTIwdXB8ZW58MXwwfHx8MTc5MzAyNjk2MXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1772883882249-8021592cc2e9?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Mnx8bWFqZXN0aWMlMjBzZWElMjB0dXJ0bGUlMjBzd2ltbWluZyUyMGNsb3NlJTIwdXB8ZW58MXwwfHx8MTc5MzAyNjk2MXww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Deklerk Basson",
+      "link": "https://unsplash.com/photos/a-sea-turtle-swims-underwater-in-blue-water-3_L29ZZkP0w",
+      "saved": "2026-10-26"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1644437816257-a01d1d4f9e25?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTl8fGF1dHVtbiUyMGxha2UlMjByZWZsZWN0aW9ufGVufDF8MHx8fDE3OTMwMjc0OTl8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1644437816257-a01d1d4f9e25?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTl8fGF1dHVtbiUyMGxha2UlMjByZWZsZWN0aW9ufGVufDF8MHx8fDE3OTMwMjc0OTl8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "autumn",
+      "by": "Adrian Mag",
+      "link": "https://unsplash.com/photos/a-body-of-water-surrounded-by-a-forest-ebo1WsEj1zs",
+      "saved": "2026-10-26"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1730368454360-7365c84f11eb?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MjZ8fGF1dHVtbiUyMHdhdGVyZmFsbHxlbnwxfDB8fHwxNzkzMTk5NjUxfDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1730368454360-7365c84f11eb?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MjZ8fGF1dHVtbiUyMHdhdGVyZmFsbHxlbnwxfDB8fHwxNzkzMTk5NjUxfDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "autumn",
+      "by": "Krzysztof Góralczyk",
+      "link": "https://unsplash.com/photos/a-waterfall-in-the-middle-of-a-forest-kJdlf_PABnA",
+      "saved": "2026-10-28"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1566711028194-e6e64e5b2c5b?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Mjh8fGFsYXNrYSUyMGxhbmRzY2FwZXxlbnwxfDB8fHwxNzkzMzc2MzY1fDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1566711028194-e6e64e5b2c5b?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Mjh8fGFsYXNrYSUyMGxhbmRzY2FwZXxlbnwxfDB8fHwxNzkzMzc2MzY1fDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Geoff Brooks",
+      "link": "https://unsplash.com/photos/lighthouse-on-isle-near-mountains-during-day-alsT10MsidY",
+      "saved": "2026-10-30"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1562410981-3ecf570e2757?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OHx8YWxhc2thJTIwbGFuZHNjYXBlfGVufDF8MHx8fDE3OTMzNzYzNjV8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1562410981-3ecf570e2757?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OHx8YWxhc2thJTIwbGFuZHNjYXBlfGVufDF8MHx8fDE3OTMzNzYzNjV8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Joris Beugels",
+      "link": "https://unsplash.com/photos/body-of-water-across-white-mountain-uf-N75ykysE",
+      "saved": "2026-10-30"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1494243762909-b498c7e440a9?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MzB8fGF1cm9yYSUyMGJvcmVhbGlzfGVufDF8MHx8fDE3OTMzNzY1OTZ8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1494243762909-b498c7e440a9?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MzB8fGF1cm9yYSUyMGJvcmVhbGlzfGVufDF8MHx8fDE3OTMzNzY1OTZ8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Johannes Groll",
+      "link": "https://unsplash.com/photos/mountain-beside-body-of-water-upXoQv5GAr8",
+      "saved": "2026-10-30"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1686862162878-055c1743d26a?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTZ8fHJvY2t5JTIwY29hc3RsaW5lJTIwd2F2ZXN8ZW58MXwwfHx8MTc5MzM3NjU1Nnww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1686862162878-055c1743d26a?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTZ8fHJvY2t5JTIwY29hc3RsaW5lJTIwd2F2ZXN8ZW58MXwwfHx8MTc5MzM3NjU1Nnww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Taisia Karaseva",
+      "link": "https://unsplash.com/photos/a-close-up-of-rocks-on-a-beach-near-the-ocean-XKfsSl2gJ5I",
+      "saved": "2026-10-30"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1621959721891-d297dfd9d6ee?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8NHx8aWNlbGFuZCUyMHdhdGVyZmFsbHxlbnwxfDB8fHwxNzkzMzQ1MTU5fDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1621959721891-d297dfd9d6ee?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8NHx8aWNlbGFuZCUyMHdhdGVyZmFsbHxlbnwxfDB8fHwxNzkzMzQ1MTU5fDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Lukas Tennie",
+      "link": "https://unsplash.com/photos/waterfalls-on-green-grass-covered-mountain-during-daytime-54Pfu4EK4pc",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1664896192176-a2151370ce41?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTJ8fGF1dHVtbiUyMGZvcmVzdHxlbnwxfDB8fHwxNzkzNDY1NDUzfDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1664896192176-a2151370ce41?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTJ8fGF1dHVtbiUyMGZvcmVzdHxlbnwxfDB8fHwxNzkzNDY1NDUzfDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "autumn",
+      "by": "Daniil Silantev",
+      "link": "https://unsplash.com/photos/a-forest-of-trees-hNfXTL2V1I8",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1486673748761-a8d18475c757?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTN8fGF1dHVtbiUyMHJvYWQlMjB0cmVlc3xlbnwxfDB8fHwxNzkzNDczNTQxfDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1486673748761-a8d18475c757?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTN8fGF1dHVtbiUyMHJvYWQlMjB0cmVlc3xlbnwxfDB8fHwxNzkzNDczNTQxfDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "autumn",
+      "by": "Karsten Würth",
+      "link": "https://unsplash.com/photos/long-straight-road-with-trees-on-the-side-rafblRbne3o",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1609872231421-c171d05de1c8?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8NXx8dHJvcGljYWwlMjB3YXRlcmZhbGwlMjBqdW5nbGV8ZW58MXwwfHx8MTc5MzQ3MzU3OHww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1609872231421-c171d05de1c8?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8NXx8dHJvcGljYWwlMjB3YXRlcmZhbGwlMjBqdW5nbGV8ZW58MXwwfHx8MTc5MzQ3MzU3OHww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "paradise",
+      "by": "Leo Foureaux",
+      "link": "https://unsplash.com/photos/waterfalls-near-green-trees-under-white-sky-during-daytime-aKS5wqa5ZMw",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1517054612019-1bf855127c43?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTl8fHlvc2VtaXRlJTIwdmFsbGV5fGVufDF8MHx8fDE3OTM0NzM1OTh8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1517054612019-1bf855127c43?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTl8fHlvc2VtaXRlJTIwdmFsbGV5fGVufDF8MHx8fDE3OTM0NzM1OTh8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Leo SERRAT",
+      "link": "https://unsplash.com/photos/mountains-under-cloudy-sky-T2vkCx_b04E",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1553787762-b5f5721f3270?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Mnx8aGF3YWlpJTIwY29hc3RsaW5lfGVufDF8MHx8fDE3OTM0NzM2MzB8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1553787762-b5f5721f3270?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Mnx8aGF3YWlpJTIwY29hc3RsaW5lfGVufDF8MHx8fDE3OTM0NzM2MzB8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "paradise",
+      "by": "Pascal Debrunner",
+      "link": "https://unsplash.com/photos/aerial-photo-of-mountain-near-ocean-during-daytime-lHJZ2JTxSlI",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1478382188900-5bb598fe27d3?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTJ8fGljZWxhbmQlMjB3YXRlcmZhbGx8ZW58MXwwfHx8MTc5MzQ3MzY1M3ww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1478382188900-5bb598fe27d3?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTJ8fGljZWxhbmQlMjB3YXRlcmZhbGx8ZW58MXwwfHx8MTc5MzQ3MzY1M3ww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Jacek Smoter",
+      "link": "https://unsplash.com/photos/waterfalls-beside-green-mountain-rEGEeXPQ1FU",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1703446592359-fefe8472cc79?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MXx8cmVkd29vZCUyMGZvcmVzdCUyMGxpZ2h0fGVufDF8MHx8fDE3OTM0NzM2NjV8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1703446592359-fefe8472cc79?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MXx8cmVkd29vZCUyMGZvcmVzdCUyMGxpZ2h0fGVufDF8MHx8fDE3OTM0NzM2NjV8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Venti Views",
+      "link": "https://unsplash.com/photos/a-forest-filled-with-lots-of-tall-trees-Vs5ciaxG1Cs",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1639994281271-fc676dd25c93?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Mnx8bWFsZGl2ZXMlMjBjcnlzdGFsJTIwY2xlYXIlMjBsYWdvb258ZW58MXwwfHx8MTc5MzAyNzA4MXww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1639994281271-fc676dd25c93?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Mnx8bWFsZGl2ZXMlMjBjcnlzdGFsJTIwY2xlYXIlMjBsYWdvb258ZW58MXwwfHx8MTc5MzAyNzA4MXww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Hu Chen",
+      "link": "https://unsplash.com/photos/a-person-walking-along-a-beach-next-to-the-ocean-TsWWrjISfgI",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1698703302438-0e90680207ca?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Nnx8Zm9nZ3klMjBsYWtlJTIwYXV0dW1uJTIwbW9ybmluZ3xlbnwxfDB8fHwxNzkzNDc0MzM1fDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1698703302438-0e90680207ca?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8Nnx8Zm9nZ3klMjBsYWtlJTIwYXV0dW1uJTIwbW9ybmluZ3xlbnwxfDB8fHwxNzkzNDc0MzM1fDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "autumn",
+      "by": "Leandra Rieger",
+      "link": "https://unsplash.com/photos/a-foggy-lake-with-trees-in-the-background-xt9i9GY4VmE",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1585130401366-fe05a8d813c4?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OHx8Y2FyaWJiZWFuJTIwYmVhY2h8ZW58MXwwfHx8MTc5MzQ3NDM4Mnww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1585130401366-fe05a8d813c4?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8OHx8Y2FyaWJiZWFuJTIwYmVhY2h8ZW58MXwwfHx8MTc5MzQ3NDM4Mnww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "paradise",
+      "by": "Jessica Pamp",
+      "link": "https://unsplash.com/photos/blue-sea-under-blue-sky-and-white-clouds-during-daytime-sGRMspZmfPE",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1488415032361-b7e238421f1b?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTB8fGF1cm9yYSUyMGJvcmVhbGlzJTIwbGFuZHNjYXBlfGVufDF8MHx8fDE3OTM0NzQ1MDF8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1488415032361-b7e238421f1b?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTB8fGF1cm9yYSUyMGJvcmVhbGlzJTIwbGFuZHNjYXBlfGVufDF8MHx8fDE3OTM0NzQ1MDF8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Jonatan Pie",
+      "link": "https://unsplash.com/photos/snow-mountain-with-aurora-borealis-EvKBHBGgaUo",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1542487121137-168451d21e71?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTh8fHNleWNoZWxsZXMlMjBiZWFjaHxlbnwxfDB8fHwxNzkzNDczNjA1fDA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1542487121137-168451d21e71?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTh8fHNleWNoZWxsZXMlMjBiZWFjaHxlbnwxfDB8fHwxNzkzNDczNjA1fDA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "paradise",
+      "by": "Maksim Shutov",
+      "link": "https://unsplash.com/photos/boulders-on-seashore-pwod5dX4hEc",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1757269267274-085b02b0ce8a?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8NXx8c3VucmlzZSUyMG92ZXIlMjBtb3VudGFpbnN8ZW58MXwwfHx8MTc5MzQ3NDQxMHww&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1757269267274-085b02b0ce8a?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8NXx8c3VucmlzZSUyMG92ZXIlMjBtb3VudGFpbnN8ZW58MXwwfHx8MTc5MzQ3NDQxMHww&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Daniel Seßler",
+      "link": "https://unsplash.com/photos/sunbeams-breaking-through-clouds-over-mountain-peaks-Z5TV7ylXLrI",
+      "saved": "2026-10-31"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1598100931785-34ea74d5ee4a?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTl8fHN1bnJpc2UlMjBvdmVyJTIwbW91bnRhaW5zfGVufDF8MHx8fDE3OTM0NzQ0MTB8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2940&q=85",
+      "thumb": "https://images.unsplash.com/photo-1598100931785-34ea74d5ee4a?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8MTl8fHN1bnJpc2UlMjBvdmVyJTIwbW91bnRhaW5zfGVufDF8MHx8fDE3OTM0NzQ0MTB8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "place": "nature",
+      "by": "Yevhenii Deshko",
+      "link": "https://unsplash.com/photos/green-grass-field-near-mountain-under-cloudy-sky-during-daytime-ic_ED5M5evg",
+      "saved": "2026-10-31"
+    }
+  ],
+  "critters": "0",
+  "photo_of_day": {
+    "day": "2026-10-31",
+    "photo": {
+      "url": "https://images.unsplash.com/photo-1511300636408-a63a89df3482?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8N3x8bmF0dXJlJTIwd2FsbHBhcGVyfGVufDF8MHx8fDE3OTI1MDk4NTV8MA&ixlib=rb-4.1.0&auto=format&fit=crop&w=2400&q=80",
+      "thumb": "https://images.unsplash.com/photo-1511300636408-a63a89df3482?ixid=M3wxMDIyNDIwfDB8MXxzZWFyY2h8N3x8bmF0dXJlJTIwd2FsbHBhcGVyfGVufDF8MHx8fDE3OTI1MDk4NTV8MA&ixlib=rb-4.1.0&auto=format&fit=max&w=400&q=60",
+      "label": "nature",
+      "by": "Luca Micheli",
+      "link": "https://unsplash.com/photos/vestrahorn-mountain-reflected-on-icelandic-beach-ruWkmt3nU58"
+    }
+  },
+  "sound_vol": "0.36",
+  "sound_level_rain": "0.26",
+  "sound_level_wind": "0.33",
+  "sound_level_waves": "0.78",
+  "sound_level_stream": "0.93",
+  "sound_level_birds": "0.59",
+  "sound_level_frost": "0.5",
+  "sound_level_space": "0.68",
+  "sound_level_gulls": "0.14",
+  "sound_level_beach": "0.26",
+  "sound_level_fire": "1",
+  "sound_level_bowls": "0.81",
+  "sound_level_piano": "0.55",
+  "sound_level_bowls2": "0.42",
+  "sound_level_ocean": "0.75",
+  "sound_level_campfire": "0.66",
+  "sound_level_lightrain": "0.14",
+  "sound_level_spa2": "0.43"
+}

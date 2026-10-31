@@ -1,0 +1,48 @@
+Nature sound recordings, from Wikimedia Commons. Converted to AAC and
+volume-matched; otherwise unedited (thunder.m4a has its silent last 4 s
+trimmed).
+
+rain.m4a     "Rain on leaves (Gravity Sound)" — Gravity Sound, CC BY 4.0
+             https://commons.wikimedia.org/wiki/File:Rain_on_leaves_(Gravity_Sound).wav
+
+thunder.m4a  "rbh-thunder-storm" — Richard Humphries (rhumphries), CC BY 3.0
+             https://commons.wikimedia.org/wiki/File:Rhumphries_-_rbh-thunder-storm.ogg
+
+stream.m4a   "stream-river-water-up-close" — jackthemurray, CC0
+             https://commons.wikimedia.org/wiki/File:433589_jackthemurray_stream-river-water-up-close.wav
+
+birds.m4a    "forest ambience" — nille, public domain
+             https://commons.wikimedia.org/wiki/File:20090610_0_ambience.ogg
+
+gulls.m4a    "Larus argentatus - European Herring Gull XC488995" — xeno-canto
+             recordist, CC BY-SA 4.0
+             https://commons.wikimedia.org/wiki/File:Larus_argentatus_-_European_Herring_Gull_XC488995.mp3
+
+beach.m4a    "NausetBeach" — waves on Nauset Beach after sunset, CC BY-SA 4.0
+             (first 3 minutes)
+             https://commons.wikimedia.org/wiki/File:NausetBeach.ogg
+
+train.m4a    "Complete Train Ride, 4 minutes" — stephan, public domain
+             (steady middle section, 0:40–2:50)
+             https://commons.wikimedia.org/wiki/File:Complete_train_ride_4_minutes.ogg
+
+Your own sounds (originals moved to the Trash once converted). Volume-matched
+and converted to AAC, silence trimmed from the ends:
+
+fire.m4a         <- customsounds/fire-1.mp3
+campfire.m4a     <- customsounds/fire-two.mp3
+lightrain.m4a    <- customsounds/light-rain.wav
+wind.m4a         <- customsounds/wind.wav  (the "Breeze" tile)
+clapping.m4a     <- customsounds/clapping.flac
+piano.m4a        <- customsounds/piano.mp3
+flute.m4a        <- customsounds/flutes.mp3
+handpan.m4a      <- customsounds/handpan.wav
+spa2.m4a         <- customsounds/spa-sound-two.mp3
+tranquility.m4a  <- customsounds/tranquility.mp3
+ambient.m4a      <- customsounds/ambient.wav
+jazz.m4a         <- customsounds/jazz.wav
+ocean.m4a        <- customsounds/gentle-ocean-waves.mp3
+windowrain.m4a   <- customsounds/rain-on-window.mp3
+bowls.m4a        <- customsounds/gentle-singing-bowls.mp3
+tibetan.m4a      <- customsounds/tibetan-bowls.mp3
+chimes.m4a       <- customsounds/gentle-wind-chime.wav

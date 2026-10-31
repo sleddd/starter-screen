@@ -8,7 +8,7 @@
  */
 
 /* Your Unsplash Access Key. */
-var UNSPLASH_ACCESS_KEY = "i3F6HGaeCMQW7nnXEen3rHLv-QUTtpeTMbEt2J8QjUA";
+var UNSPLASH_ACCESS_KEY = "";
 
 /* Topic -> the caption shown on screen. Edit freely; add or remove lines.
    `q` is what gets searched, `label` is what you see bottom-left.

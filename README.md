@@ -1,6 +1,6 @@
 # Custom Starter Screen App
 
-A personal new-tab page like momentum, but customized for me: a big clock over a fresh Unsplash photo, with world clocks, weather, a daily quote and nature sounds mixer.
+A new-tab page starter screen like momentum, but customized for me: a big clock over a fresh Unsplash photo, with world clocks, weather, a daily quote and nature sounds mixer.
 
 ![mymomentum new tab](screenshots/new-tab.png)
 
